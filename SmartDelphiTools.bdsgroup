@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+  <PersonalityInfo>
+    <Option>
+      <Option Name="Personality">Default.Personality</Option>
+      <Option Name="ProjectType"></Option>
+      <Option Name="Version">1.0</Option>
+      <Option Name="GUID">{0DEA933B-C8E7-47BB-825E-F556DD5C9674}</Option>
+    </Option>
+  </PersonalityInfo>
+  <Default.Personality>
+    
+    <Projects>
+      <Projects Name="Shortcut.exe">Create Shortcut\Shortcut.bdsproj</Projects>
+      <Projects Name="DosLineConv.exe">DosLineConv\DosLineConv.bdsproj</Projects>
+      <Projects Name="FileExtCh.exe">FileExtCh\FileExtCh.bdsproj</Projects>
+      <Projects Name="FileMD5.exe">FileMD5\FileMD5.bdsproj</Projects>
+      <Projects Name="Calender.exe">Kalenderersatz\Calender.bdsproj</Projects>
+      <Projects Name="Targets">Shortcut.exe DosLineConv.exe FileExtCh.exe FileMD5.exe Calender.exe</Projects>
+    </Projects>
+    <Dependencies/>
+  </Default.Personality>
+</BorlandProject>

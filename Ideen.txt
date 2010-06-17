@@ -1,0 +1,8 @@
+Ein Tool, das das automatische Herunterfahren verhindert (Ausschaltbar über Benutzer)
+Tray-Kalender für Firmen-PCs
+MD5 Tool
+"cd" das auch eine Datei annimmt (und dann in das verzeichnis springt)
+"fc" mit Drag'n'Drop (auch mehr als 2, dann gruppieren)
+Verzeichnis-Hash-Tool
+DosLineConv: Auch für Linux und andere Dateitypen
+DosLineConv auch Rekursiv (wie bei den VTS Shell Tools)
