@@ -127,6 +127,7 @@ object Form1: TForm1
       Checked = True
       TabOrder = 4
       TabStop = True
+      OnClick = RadioButton1Click
     end
     object RadioButton2: TRadioButton
       Left = 192
@@ -135,6 +136,7 @@ object Form1: TForm1
       Height = 17
       Caption = 'Lock on source change'
       TabOrder = 5
+      OnClick = RadioButton2Click
     end
     object Edit5: TEdit
       Left = 16

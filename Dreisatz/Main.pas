@@ -30,6 +30,8 @@ type
     procedure Edit4Change(Sender: TObject);
     procedure SourceChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure RadioButton1Click(Sender: TObject);
+    procedure RadioButton2Click(Sender: TObject);
   private
     procedure UpdateFract(A, B: Extended);
     procedure AllEnabled(AEnabled: boolean; AExcept: TObject);
@@ -42,6 +44,7 @@ implementation
 
 {$R *.dfm}
 
+{$DEFINE ALLOW_A_IS_ZERO}
 {$DEFINE ALLOW_B_IS_ZERO}
 
 // Setzt einen Text ohne OnChange() auszulösen
@@ -132,10 +135,20 @@ procedure TForm1.AllEnabled(AEnabled: boolean; AExcept: TObject);
 begin
   if AExcept <> Edit1 then
     Edit1.Enabled := AEnabled;
+
   if AExcept <> Edit2 then
     Edit2.Enabled := AEnabled;
+
+  {$IFDEF ALLOW_A_IS_ZERO}
+  if Edit1.Text <> '0' then
+  begin
+  {$ENDIF}
   if AExcept <> Edit3 then
     Edit3.Enabled := AEnabled;
+  {$IFDEF ALLOW_A_IS_ZERO}
+  end;
+  {$ENDIF}
+
   {$IFDEF ALLOW_B_IS_ZERO}
   if Edit2.Text <> '0' then
   begin
@@ -157,11 +170,38 @@ begin
     A := StrToFloat(Edit1.Text);
     B := StrToFloat(Edit2.Text);
 
-    UpdateFract(A, B);
+    {$IFDEF ALLOW_A_IS_ZERO}
+    {$IFDEF ALLOW_B_IS_ZERO}
+    if (A = 0) and (B = 0) then
+    begin
+      raise Exception.Create('Both source values cannot be zero.');
+    end;
+    {$ENDIF}
+    {$ENDIF}
 
     if RadioButton2.Checked then
     begin
+      {$IFDEF ALLOW_A_IS_ZERO}
+      if A = 0 then
+      begin
+        RadioButton1.Enabled := false;
+        RadioButton2.Enabled := false;
+        SetText(Edit3, '0');
+        Edit5.Text := '0';
+        Edit3.Enabled := false;
+        Edit5.Enabled := false;
+      end
+      else
+      begin
+        RadioButton1.Enabled := true;
+        RadioButton2.Enabled := true;
+        Edit3.Enabled := true;
+        Edit5.Enabled := true;
+      {$ENDIF}
       Edit3.Text := FloatToStr(A / B * StrToFloat(Edit4.Text));
+      {$IFDEF ALLOW_A_IS_ZERO}
+      end;
+      {$ENDIF}
     end
     else
     begin
@@ -187,6 +227,8 @@ begin
       end;
       {$ENDIF}
     end;
+
+    UpdateFract(A, B);
   except
     TEdit(Sender).Color := clRed;
     AllEnabled(false, Sender);
@@ -241,6 +283,22 @@ begin
   B := StrToFloat(Edit2.Text);
 
   UpdateFract(A, B);
+end;
+
+procedure TForm1.RadioButton1Click(Sender: TObject);
+begin
+  if StrToFloat(Edit2.Text) = 0 then
+  begin
+    Edit2.OnChange(Edit2);
+  end;
+end;
+
+procedure TForm1.RadioButton2Click(Sender: TObject);
+begin
+  if StrToFloat(Edit1.Text) = 0 then
+  begin
+    Edit1.OnChange(Edit1);
+  end;
 end;
 
 end.
