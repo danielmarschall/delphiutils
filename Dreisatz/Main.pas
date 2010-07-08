@@ -204,6 +204,7 @@ begin
     B := StrToFloat(Edit2.Text);
 
     SetText(Edit4, FloatToStr(B / A * StrToFloat(Edit3.Text)));
+    Edit6.Text := IntToStr(Round(StrToFloat(Edit4.Text)));
 
     Edit5.Text := IntToStr(Round(StrToFloat(Edit3.Text)));
   except
@@ -223,6 +224,7 @@ begin
     B := StrToFloat(Edit2.Text);
 
     SetText(Edit3, FloatToStr(A / B * StrToFloat(Edit4.Text)));
+    Edit5.Text := IntToStr(Round(StrToFloat(Edit3.Text)));
 
     Edit6.Text := IntToStr(Round(StrToFloat(Edit4.Text)));
   except
