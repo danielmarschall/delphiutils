@@ -198,7 +198,8 @@ begin
         Edit3.Enabled := true;
         Edit5.Enabled := true;
       {$ENDIF}
-      Edit3.Text := FloatToStr(A / B * StrToFloat(Edit4.Text));
+      SetText(Edit3, FloatToStr(A / B * StrToFloat(Edit4.Text)));
+      Edit5.Text := IntToStr(Round(StrToFloat(Edit3.Text)));
       {$IFDEF ALLOW_A_IS_ZERO}
       end;
       {$ENDIF}
@@ -222,7 +223,8 @@ begin
         Edit4.Enabled := true;
         Edit6.Enabled := true;
       {$ENDIF}
-      Edit4.Text := FloatToStr(B / A * StrToFloat(Edit3.Text));
+      SetText(Edit4, FloatToStr(B / A * StrToFloat(Edit3.Text)));
+      Edit6.Text := IntToStr(Round(StrToFloat(Edit4.Text)));
       {$IFDEF ALLOW_B_IS_ZERO}
       end;
       {$ENDIF}
