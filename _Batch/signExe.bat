@@ -1,2 +1,9 @@
 @echo off
-if exist "%~f1" signtool sign -d "ViaThinkSoft OpenSource Application" -du "http://www.viathinksoft.de/" -a -t "http://time.certum.pl/" "%~f1"
+
+rem SET TSA=http://timestamp.verisign.com/scripts/timstamp.dll
+SET TSA=http://time.certum.pl/
+
+SET NAME=ViaThinkSoft OpenSource Application
+SET URL=http://www.viathinksoft.de/
+
+if exist "%~f1" signtool sign -d "%NAME%" -du "%URL%" -a -t "%TSA%" "%~f1"
