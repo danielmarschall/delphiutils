@@ -22,7 +22,6 @@ object Form1: TForm1
     ScrollBars = ssBoth
     TabOrder = 0
     WordWrap = False
-    ExplicitHeight = 369
   end
   object Button1: TButton
     Left = 0
@@ -33,8 +32,5 @@ object Form1: TForm1
     Caption = 'Ersetze'
     TabOrder = 1
     OnClick = Button1Click
-    ExplicitLeft = 360
-    ExplicitTop = 272
-    ExplicitWidth = 75
   end
 end

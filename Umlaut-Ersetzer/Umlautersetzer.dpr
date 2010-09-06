@@ -1,8 +1,8 @@
-program Project1;
+program Umlautersetzer;
 
 uses
   Forms,
-  Unit1 in 'Unit1.pas' {Form1};
+  UmlautersetzerMain in 'UmlautersetzerMain.pas' {Form1};
 
 {$R *.res}
 

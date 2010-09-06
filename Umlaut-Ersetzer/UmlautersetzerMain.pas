@@ -1,4 +1,4 @@
-unit Unit1;
+unit UmlautersetzerMain;
 
 interface
 
@@ -26,6 +26,8 @@ implementation
 
 procedure TForm1.Button1Click(Sender: TObject);
 begin
+  // ToDo: Better use TJvStrToHTML
+
   memo1.Text := StringReplace(memo1.Text, 'ä', '&auml;', [rfReplaceAll]);
   memo1.Text := StringReplace(memo1.Text, '�', '&auml;', [rfReplaceAll]);
   memo1.Text := StringReplace(memo1.Text, 'ö', '&ouml;', [rfReplaceAll]);
