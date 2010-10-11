@@ -1,6 +1,6 @@
 unit MethodPtr;
 
-// http://www.swissdelphicenter.ch/de/showcode.php?id=1671
+// Ref: http://www.swissdelphicenter.ch/de/showcode.php?id=1671
 
 interface
 

@@ -1,20 +1,25 @@
 unit WindowsCompat;
 
+// Ref: http://qc.embarcadero.com/wc/qcmain.aspx?d=48771
+
 interface
 
 uses
   Windows;
 
-// TODO: Wie definiert?
+{$IF NOT DECLARED(GWLP_WNDPROC)}
+const
+  GWLP_WNDPROC = -4;
+{$IFEND}
 
 {$IF NOT DECLARED(LONG_PTR)}
 type
-  LONG_PTR = Pointer; // TODO: ?
+  LONG_PTR = Pointer; // TODO: Wie genau definiert?
 {$IFEND}
 
 {$IF NOT DECLARED(WNDPROC)}
 type
-  WNDPROC = TFNWndProc; // TODO: ?
+  WNDPROC = TFNWndProc; // TODO: Wie genau definiert?
 {$IFeND}
 
 {$IF NOT DECLARED(GetWindowLongPtr)}

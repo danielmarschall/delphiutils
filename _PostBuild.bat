@@ -16,4 +16,3 @@ call _Batch\processDir.bat "Units"
 call _Batch\processDir.bat "umlaut-Ersetzer"
 call _Batch\processDir.bat "Dreisatz"
 call _Batch\processDir.bat "."
-pause

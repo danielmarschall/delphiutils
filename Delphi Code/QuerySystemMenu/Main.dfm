@@ -15,6 +15,13 @@ object MainForm: TMainForm
   OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
+  object Label1: TLabel
+    Left = 144
+    Top = 184
+    Width = 31
+    Height = 13
+    Caption = 'Label1'
+  end
   object CheckBox1: TCheckBox
     Left = 112
     Top = 128
