@@ -12,14 +12,23 @@ const
   GWLP_WNDPROC = -4;
 {$IFEND}
 
+{$IF NOT DECLARED(PtrInt)}
+type
+  {$IFDEF WIN32}
+  PtrInt = Longint;
+  {$ELSE}
+  PtrInt = Int64;
+  {$ENDIF}
+{$IFEND}
+
 {$IF NOT DECLARED(LONG_PTR)}
 type
-  LONG_PTR = Pointer; // TODO: Wie genau definiert?
+  LONG_PTR = PtrInt; // Offizielle Deklaration?
 {$IFEND}
 
 {$IF NOT DECLARED(WNDPROC)}
 type
-  WNDPROC = TFNWndProc; // TODO: Wie genau definiert?
+  WNDPROC = TFNWndProc; // Offizielle Deklaration?
 {$IFeND}
 
 {$IF NOT DECLARED(GetWindowLongPtr)}

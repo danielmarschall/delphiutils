@@ -106,8 +106,8 @@ begin
 
   // Problem: Kann es zu Komplikationen mit mehreren msg handlern kommen?
   // (Beim vermischten register+unregister !)
-  
-  SetWindowLongPtr(FHandle, GWLP_WNDPROC, MsgProcPointer);
+
+  SetWindowLongPtr(FHandle, GWLP_WNDPROC, LONG_PTR(MsgProcPointer));
 end;
 
 procedure TWndProcIntercept.UnregisterCB;
