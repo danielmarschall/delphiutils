@@ -1,5 +1,7 @@
 @echo off
 call _Batch\processDir.bat "Delphi Code\QuerySystemMenu"
+call _Batch\processDir.bat "Delphi Code\DragNDropDlgs"
+call _Batch\processDir.bat "Delphi Code\ParamUtils"
 call _Batch\processDir.bat "_Common"
 call _Batch\processDir.bat "Batch-Working-Directory"
 call _Batch\processDir.bat "CmdHere"

@@ -1,4 +1,4 @@
-@echo on
+@echo off
 
 REM Bereits signiert?
 signtool verify /pa "%~f1"
