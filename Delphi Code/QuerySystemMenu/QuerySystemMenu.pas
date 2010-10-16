@@ -81,7 +81,7 @@ end;
 function TWndProcIntercept.MsgProc(Handle: HWnd; Msg: UInt;
   WParam: Windows.WParam; LParam: Windows.LParam): LResult;
 begin
-  result := Windows.CallWindowProc(WNDPROC(FPrevWndProc), Handle, Msg, WParam, LParam)
+  result := Windows.CallWindowProc(WindowsCompat.WNDPROC(FPrevWndProc), Handle, Msg, WParam, LParam)
 end;
 
 function TWndProcIntercept.MsgProcVirtualCall(Handle: HWnd; Msg: UInt;
@@ -102,7 +102,7 @@ begin
 
   f.Code := @TWndProcIntercept.MsgProcVirtualCall;
   f.Data := Self;
-  MsgProcPointer := MakeProcInstance(f);
+  MsgProcPointer := MethodPtr.MakeProcInstance(f);
 
   // Problem: Kann es zu Komplikationen mit mehreren msg handlern kommen?
   // (Beim vermischten register+unregister !)

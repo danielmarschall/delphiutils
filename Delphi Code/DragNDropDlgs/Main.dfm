@@ -22,4 +22,8 @@ object Form1: TForm1
     TabOrder = 0
     OnClick = Button1Click
   end
+  object OpenDialog1: TOpenDialog
+    Left = 352
+    Top = 144
+  end
 end

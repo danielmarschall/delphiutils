@@ -9,6 +9,7 @@ uses
 type
   TForm1 = class(TForm)
     Button1: TButton;
+    OpenDialog1: TOpenDialog;
     procedure Button1Click(Sender: TObject);
   private
     { Private-Deklarationen }
@@ -32,9 +33,10 @@ var
 begin
   x := TDragDropOpenDlg.Create(self);
   try
+    x.Options := x.Options + [ofAllowMultiSelect];
     if x.Execute then
     begin
-      ShowMessage('Datei erhalten: ' + x.FileName);
+      ShowMessage('Datei erhalten: ' + x.Files.Text);
     end;
   finally
     x.Free;

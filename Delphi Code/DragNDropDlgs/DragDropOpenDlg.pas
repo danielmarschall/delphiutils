@@ -4,13 +4,17 @@ unit DragDropOpenDlg;
 // - New design
 // - Overwrite (Save) / MustExists (Open) as default
 // - DragDrop feature!
+// + DialogHandle
 
 // TODO (incl. QuerySystemMenu): Besser mit WndProc(var Message) und Dispatch wie in Dialogs.pas arbeiten?
+
+// TODO
+// - Fertigstellen. Alles ausschließen wie z.B. Ordner, Nonexisting files etc. (je nach Options)
 
 interface
 
 uses
-  Windows, Dialogs, Classes, messages, shellapi, sysutils, WindowsCompat;
+  Windows, WindowsCompat, Dialogs, Classes, Messages, ShellAPI, SysUtils;
 
 type
   TDragDropOpenDlg = class(TOpenDialog)
@@ -22,6 +26,7 @@ type
     function msgr(Handle: HWnd; Msg: UInt;
       WParam: Windows.WParam; LParam: Windows.LParam): LResult; stdcall;
   public
+    function DialogHandle: THandle;
     constructor Create(AOwner: TComponent); override;
   end;
 
@@ -33,69 +38,92 @@ uses
 { TDragDropOpenDlg }
 
 const
-  IDA = 101;
+  ID_DROP_FIELD = 101;
+
+function TDragDropOpenDlg.DialogHandle: THandle;
+begin
+  result := GetParent(Self.Handle);
+end;
 
 function TDragDropOpenDlg.msgr(Handle: HWnd; Msg: UInt;
   WParam: Windows.WParam; LParam: Windows.LParam): LResult;
- const
-   MAXFILENAME = 255; // TODO MAX_PATH?
- var
-   cnt, fileCount : integer;
-   fileName : array [0..MAXFILENAME] of char;
+const
+  MAXFILENAME = 255; // MAX_PATH???
+  ID_FILENAME_EDIT = $47C; // Tested on Win XP
+var
+  cnt, fileCount : integer;
+  fileName : array [0..MAXFILENAME] of char;
+  hDialog, hFilename: THandle;
+  Filenames: string;
+resourcestring
+  LNG_NO_MULTISELECT = 'Es kann nur eine Datei ausgewählt werden.';
+  LNG_NO_FOLDER = 'Ordner können nicht aufgenommen werden. Bitte die Ordner aus der Selektion nehmen.';
+  LNG_FILE_NOT_EXISTS = 'Datei "%s" existiert nicht. Bitte korrigieren Sie die Selektion.';
 begin
+  result := Windows.CallWindowProc(WindowsCompat.WNDPROC(FPrevWndProc), Handle, Msg, WParam, LParam);
+
   if Msg = WM_DROPFILES then
   begin
-    // how many files dropped?
     fileCount := DragQueryFile(wParam, $FFFFFFFF, fileName, MAXFILENAME) ;
 
-    // query for file names
-
-    for cnt := 0 to fileCount-1 do
+    if (fileCount > 1) and not (ofAllowMultiSelect in Options) then
     begin
-      DragQueryFile(wParam, cnt, fileName, MAXFILENAME) ;
-
-      //do something with the file(s)
-      showmessage('Drag accepted: ' + filename);
+      ShowMessage(LNG_NO_MULTISELECT);
+      Exit;
     end;
 
-    //release memory
+    Filenames := '';
+    for cnt := 0 to fileCount-1 do
+    begin
+      DragQueryFile(wParam, cnt, fileName, MAXFILENAME);
+
+      if DirectoryExists(fileName) then
+      begin
+        ShowMessage(LNG_NO_FOLDER);
+        Exit;
+      end;
+
+      if (ofFileMustExist in Options) and not FileExists(fileName) then
+      begin
+        // Should never happen
+        ShowMessageFmt(LNG_FILE_NOT_EXISTS, [fileName]);
+        Exit;
+      end;
+
+      Filenames := Filenames + '"' + fileName + '"' + ' ';
+    end;
+    Filenames := copy(Filenames, 1, length(Filenames)-1);
+
     DragFinish(wParam);
 
-    // TOpenDialog.Handle ist irgendwie das falsche :?
-    Filename := filename;
-    SendMessage(GetParent(Self.Handle), WM_CLOSE, 0, 0);
+    hDialog := DialogHandle;
+    hFilename := GetDlgItem(hDialog, ID_FILENAME_EDIT);
+    SendMessage(hFilename, WM_SETTEXT, 0, DWord(PChar(Filenames)));
 
-    // TODO: Before WM_CLOSE, we have to send something to make the call successfull
+    SendMessage(hDialog, WM_COMMAND, IDOK, 0);
   end;
-
-  result := Windows.CallWindowProc({!!!}WindowsCompat.WNDPROC(FPrevWndProc), Handle, Msg, WParam, LParam)
 end;
 
 procedure TDragDropOpenDlg.OpenDialog1Show(Sender: TObject);
 var
-  hParent: THandle;
+  hDialog: THandle;
   rect: TRect;
   hEdit: THandle;
   f: TMethod;
 begin
-  // TOpenDialog.Handle ist irgendwie das falsche :?
-  hParent := GetParent(Handle);
-  // Position und Größe ermitteln
-  GetWindowRect(hParent, rect);
-  // Dialog vergrößern für Edit
-  SetWindowPos(hParent, 0, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top
+  hDialog := DialogHandle;
+  GetWindowRect(hDialog, rect);
+  SetWindowPos(hDialog, 0, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top
     + 25*2, SWP_NOMOVE);
-  // Edit erzeugen, ID = 101
   hEdit := CreateWindowEx(WS_EX_CLIENTEDGE, 'EDIT', '', WS_VISIBLE or WS_CHILD,
-    195, rect.Bottom - rect.Top - 27, 150, 20, hParent, IDA, 0, nil);
-  if hEdit = 0 then
-    RaiseLastOSError;
+    195, rect.Bottom - rect.Top - 27, 150, 20, hDialog, ID_DROP_FIELD, 0, nil);
+  if hEdit = 0 then RaiseLastOSError;
 
   FPrevWndProc := GetWindowLongPtr(hEdit, GWLP_WNDPROC);
 
   f.Code := @TDragDropOpenDlg.msgr;
   f.Data := Self;
-  MsgProcPointer := {!!!}MethodPtr.MakeProcInstance(f);
+  MsgProcPointer := MethodPtr.MakeProcInstance(f);
 
   // Problem: Kann es zu Komplikationen mit mehreren msg handlern kommen?
   // (Beim vermischten register+unregister !)
@@ -106,29 +134,14 @@ end;
 
 procedure TDragDropOpenDlg.OpenDialog1Close(Sender: TObject);
 var
-  hParent: THandle;
+  hDialog: THandle;
   hEdit: THandle;
-  Buffer: PChar;
-  len: Integer;
 begin
-  hParent := GetParent(Handle);
-  // Handle des Edits ermitteln, ID = 101 siehe oben
-  hEdit := GetDlgItem(hParent, IDA);
+  hDialog := DialogHandle;
+  hEdit := GetDlgItem(hDialog, ID_DROP_FIELD);
 
   DragAcceptFiles(hEdit, false);
   SetWindowLongPtr(hEdit, GWLP_WNDPROC, FPrevWndProc);
-
-  // Speicher allozieren
-  len := SendMessage(hEdit, WM_GETTEXTLENGTH, 0, 0);
-  GetMem(Buffer, len + 1);
-  try
-    ZeroMemory(Buffer, len + 1);
-    // Text aus Edit holen
-    SendMessage(hEdit, WM_GETTEXT, len, lParam(Buffer));
-    ShowMessage('Text im Editfeld:' + Buffer);
-  finally
-    FreeMem(Buffer, len + 1);
-  end;
 end;
 
 constructor TDragDropOpenDlg.Create(AOwner: TComponent);
@@ -138,9 +151,6 @@ begin
   // TODO: Als Wrapper, damit auch weiter verwendbar!
   OnClose := OpenDialog1Close;
   OnShow := OpenDialog1Show;
-
 end;
-
-// {!!!} = Bitte auch in QuerySystemMenu verwenden!
 
 end.
