@@ -61,9 +61,11 @@ begin
     //release memory
     DragFinish(wParam);
 
-    // TODO: Geht nicht
-SendMessage(Self.Handle, WM_CLOSE, 0, 0);
-DestroyWindow(Self.Handle);
+    // TOpenDialog.Handle ist irgendwie das falsche :?
+    Filename := filename;
+    SendMessage(GetParent(Self.Handle), WM_CLOSE, 0, 0);
+
+    // TODO: Before WM_CLOSE, we have to send something to make the call successfull
   end;
 
   result := Windows.CallWindowProc({!!!}WindowsCompat.WNDPROC(FPrevWndProc), Handle, Msg, WParam, LParam)
@@ -76,7 +78,7 @@ var
   hEdit: THandle;
   f: TMethod;
 begin
-  // OpenDialog1.Handle ist irgendwie das falsche :?
+  // TOpenDialog.Handle ist irgendwie das falsche :?
   hParent := GetParent(Handle);
   // Position und Größe ermitteln
   GetWindowRect(hParent, rect);

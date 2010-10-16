@@ -10,25 +10,33 @@ uses
 
 type
   TParamInfo = packed record
-    ParamName: String; // in actual case, if found
     Found: boolean;
-    Position: integer; // only if found, otherwise 0
+    ParamName: String; // ONLY if found: The actual found argument name (e.g. /a, -a OR --alpha)
+    Position: integer; // Only if found, otherwise 0
     Values: TDynStringArray;
   end;
 
-function CheckParam(AParamStr: String; ACaseSensitive: boolean): TParamInfo;
+  TParamInfoArray = array of TParamInfo;
+
+function CheckParam(AParamStr: TDynStringArray; ACaseSensitive: boolean; AMinOffset: integer): TParamInfo;
 // function DecodeFilename(): TDynStringArray;
 // function GetFilenames(AOffset: integer): TDynStringArray;
 // function GetFilenames(): TDynStringArray;
+function ListParams: TParamInfoArray;
 
 implementation
+
+// Private
+
+const
+  ArgDelimiter = '--';
 
 function _NewParamInfo: TParamInfo;
 begin
   result.ParamName := '';
   result.Found := false;
   result.Position := 0;
-  SetLength(result.Values, 0);
+  result.Values := NewStringArray
 end;
 
 function _IsFlag(AParam: string): boolean;
@@ -40,28 +48,52 @@ begin
   result := (c = '/') or (c = '-');
 end;
 
-function CheckParam(AParamStr: String; ACaseSensitive: boolean): TParamInfo;
+procedure _AppendParamInfoToArray(const s: TParamInfo; var x: TParamInfoArray);
 var
   i: integer;
-  s: String;
+begin
+  i := Length(x);
+  SetLength(x, i+1);
+  x[i] := s;
+end;
+
+// Public
+
+function CheckParam(AParamStr: TDynStringArray; ACaseSensitive: boolean; AMinOffset: integer): TParamInfo;
+var
+  i, j: integer;
+  s, t: String;
 begin
   result := _NewParamInfo;
-  result.ParamName := AParamStr;
+
+  for j := 0 to Length(AParamStr) - 1 do
+  begin
+    t := AParamStr[j];
+    if not _IsFlag(t) then
+    begin
+      // TODO: Exception
+      exit;
+    end;
+  end;
 
   // Search
-  for i := 1 to ParamCount do
+  for i := AMinOffset to ParamCount do
   begin
     s := ParamStr(i);
 
-    if s = '--' then break;
+    if s = ArgDelimiter then break;
 
-    if ACaseSensitive then
+    for j := 0 to Length(AParamStr) - 1 do
     begin
-      result.Found := AnsiUpperCase(AParamStr) = AnsiUpperCase(s);
-    end
-    else
-    begin
-      result.Found := AParamStr = s;
+      t := AParamStr[j];
+      if ACaseSensitive then
+      begin
+        result.Found := AnsiUpperCase(t) = AnsiUpperCase(s);
+      end
+      else
+      begin
+        result.Found := t = s;
+      end;
     end;
 
     if result.Found then
@@ -79,14 +111,37 @@ begin
     begin
       s := ParamStr(i);
 
+      if s = ArgDelimiter then break;
+
       if not _IsFlag(s) then
       begin
-        AppendStringToArray(result.Values, s);
+        AppendStringToArray(s, result.Values);
       end;
     end;
   end;
 end;
 
+function ListParams: TParamInfoArray;
+var
+  i: integer;
+  s: String;
+begin
+  SetLength(result, 0);
 
+  for i := 1 to ParamCount do
+  begin
+    s := ParamStr(i);
+
+    if s = ArgDelimiter then break;
+
+    if _IsFlag(s) then
+    begin
+      _AppendParamInfoToArray(CheckParam(BuildStringArray(s), true, i), result);
+    end;
+  end;
+end;
+
+// Nicht berücksichtigt
+// - Fehler bei doppelten Vorkommen
 
 end.

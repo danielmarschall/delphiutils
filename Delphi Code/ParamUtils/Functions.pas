@@ -8,16 +8,32 @@ uses
 type
   TDynStringArray = array of String;
 
-procedure AppendStringToArray(var x: TDynStringArray; const s: string);
+procedure AppendStringToArray(const s: string; var x: TDynStringArray);
+function NewStringArray: TDynStringArray;
+function BuildStringArray(s: String): TDynStringArray;
 
 function ExtendFilename(s: string; AllowDirs: boolean): TDynStringArray;
 
 implementation
 
-procedure AppendStringToArray(var x: TDynStringArray; const s: string);
+procedure AppendStringToArray(const s: string; var x: TDynStringArray);
+var
+  i: integer;
 begin
-  SetLength(x, Length(x)+1);
-  x[Length(x)-1] := s;
+  i := Length(x);
+  SetLength(x, i+1);
+  x[i] := s;
+end;
+
+function NewStringArray: TDynStringArray;
+begin
+  SetLength(result, 0);
+end;
+
+function BuildStringArray(s: String): TDynStringArray;
+begin
+  result := NewStringArray;
+  AppendStringToArray(s, result);
 end;
 
 // Src: http://www.swissdelphicenter.ch/torry/showcode.php?id=1140
@@ -54,7 +70,7 @@ begin
     begin
       // 3. Make UNC
       s := ExpandUNCFileName(SR.Name);
-      AppendStringToArray(result, s);
+      AppendStringToArray(s, result);
 
       IsFound := FindNext(SR) = 0;
     end;

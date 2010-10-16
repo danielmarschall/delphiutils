@@ -32,10 +32,13 @@ var
 begin
   x := TDragDropOpenDlg.Create(self);
   try
-         if x.execute then    ShowMessage('Datei erhalten: ' + x.FileName);
+    if x.Execute then
+    begin
+      ShowMessage('Datei erhalten: ' + x.FileName);
+    end;
   finally
-  x.free;
-end;
+    x.Free;
+  end;
 end;
 
 end.
