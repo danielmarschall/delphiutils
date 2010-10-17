@@ -7,6 +7,8 @@ uses
 
 {$R *.res}
 
+{$R Manifest.res}
+
 begin
   Application.Initialize;
   Application.CreateForm(TForm1, Form1);
