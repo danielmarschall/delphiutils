@@ -1,15 +1,12 @@
 unit DragDropOpenDlg;
 
 // Improvements to the Dialogs
-// - New design
-// - Overwrite (Save) / MustExists (Open) as default
-// - DragDrop feature!
+// + Automatic new design for Windows Vista
+// + PathMustExists+Overwrite (Save) / FileMustExists (Open) as default
+// + DragDrop Feature!
 // + DialogHandle
 
 // TODO (incl. QuerySystemMenu): Besser mit WndProc(var Message) und Dispatch wie in Dialogs.pas arbeiten?
-
-// TODO
-// - Fertigstellen. Alles ausschließen wie z.B. Ordner, Nonexisting files etc. (je nach Options)
 
 interface
 
@@ -21,13 +18,23 @@ type
   private
     MsgProcPointer: pointer;
     FPrevWndProc: LONG_PTR;
-    procedure OpenDialog1Show(Sender: TObject);
-    procedure OpenDialog1Close(Sender: TObject);
-    function msgr(Handle: HWnd; Msg: UInt;
+    FOnClose: TNotifyEvent;
+    FOnShow: TNotifyEvent;
+    FDNDArea: boolean;
+    procedure DialogShow(Sender: TObject);
+    procedure DialogClose(Sender: TObject);
+    function DropGroundWndProc(Handle: HWnd; Msg: UInt;
       WParam: Windows.WParam; LParam: Windows.LParam): LResult; stdcall;
+    function GetDialogHandle: THandle;
+  protected
+    function IsFileAllowed(AFileName: string; AShowWarning: boolean): boolean;
   public
-    function DialogHandle: THandle;
     constructor Create(AOwner: TComponent); override;
+    property DialogHandle: THandle read GetDialogHandle;
+  published
+    property OnClose: TNotifyEvent read FOnClose write FOnClose;
+    property OnShow: TNotifyEvent read FOnShow write FOnShow;
+    property DragDropArea: boolean read FDNDArea write FDNDArea default true;
   end;
 
 implementation
@@ -40,117 +47,154 @@ uses
 const
   ID_DROP_FIELD = 101;
 
-function TDragDropOpenDlg.DialogHandle: THandle;
+function TDragDropOpenDlg.GetDialogHandle: THandle;
 begin
   result := GetParent(Self.Handle);
 end;
 
-function TDragDropOpenDlg.msgr(Handle: HWnd; Msg: UInt;
+function TDragDropOpenDlg.IsFileAllowed(AFileName: string;
+  AShowWarning: boolean): boolean;
+
+  procedure DoMessage(AMessageText: String);
+  resourcestring
+    LNG_DND_ERROR = 'Drag''n''Drop Fehler';
+  begin
+    if AShowWarning then
+    begin
+      MessageBox(DialogHandle, PChar(AMessageText), PChar(LNG_DND_ERROR), MB_ICONHAND or MB_OK)  
+    end;
+  end;
+  
+resourcestring
+  LNG_NO_FOLDER = 'Ordner können nicht aufgenommen werden. Bitte die Ordner aus der Selektion nehmen.';
+  LNG_FILE_NOT_EXISTS = 'Datei "%s" existiert nicht. Bitte korrigieren Sie die Selektion.';
+begin
+  // TODO: Wurden alle Dinge aus den Options berücksichtigt?
+
+  result := false;
+  
+  if DirectoryExists(fileName) then
+  begin
+    DoMessage(LNG_NO_FOLDER);
+    Exit;
+  end;
+
+  if (ofFileMustExist in Options) and not FileExists(fileName) then
+  begin
+    // Should usually never happen
+    DoMessage(Format(LNG_FILE_NOT_EXISTS, [fileName]));
+    Exit;
+  end;
+
+  result := true;
+end;
+
+function TDragDropOpenDlg.DropGroundWndProc(Handle: HWnd; Msg: UInt;
   WParam: Windows.WParam; LParam: Windows.LParam): LResult;
 const
-  MAXFILENAME = 255; // MAX_PATH???
   ID_FILENAME_EDIT = $47C; // Tested on Win XP
 var
-  cnt, fileCount : integer;
-  fileName : array [0..MAXFILENAME] of char;
+  i, fileCount: integer;
+  fileName: array [0..MAX_PATH-1] of char;
   hDialog, hFilename: THandle;
   Filenames: string;
 resourcestring
   LNG_NO_MULTISELECT = 'Es kann nur eine Datei ausgewählt werden.';
-  LNG_NO_FOLDER = 'Ordner können nicht aufgenommen werden. Bitte die Ordner aus der Selektion nehmen.';
-  LNG_FILE_NOT_EXISTS = 'Datei "%s" existiert nicht. Bitte korrigieren Sie die Selektion.';
 begin
   result := Windows.CallWindowProc(WindowsCompat.WNDPROC(FPrevWndProc), Handle, Msg, WParam, LParam);
 
   if Msg = WM_DROPFILES then
   begin
-    fileCount := DragQueryFile(wParam, $FFFFFFFF, fileName, MAXFILENAME) ;
-
-    if (fileCount > 1) and not (ofAllowMultiSelect in Options) then
-    begin
-      ShowMessage(LNG_NO_MULTISELECT);
-      Exit;
-    end;
-
-    Filenames := '';
-    for cnt := 0 to fileCount-1 do
-    begin
-      DragQueryFile(wParam, cnt, fileName, MAXFILENAME);
-
-      if DirectoryExists(fileName) then
+    fileCount := DragQueryFile(wParam, DWord(-1) (* $FFFFFFFF *), nil, 0);
+    try
+      if (fileCount > 1) and not (ofAllowMultiSelect in Options) then
       begin
-        ShowMessage(LNG_NO_FOLDER);
+        ShowMessage(LNG_NO_MULTISELECT);
         Exit;
       end;
 
-      if (ofFileMustExist in Options) and not FileExists(fileName) then
+      Filenames := '';
+      for i := 0 to fileCount-1 do
       begin
-        // Should never happen
-        ShowMessageFmt(LNG_FILE_NOT_EXISTS, [fileName]);
-        Exit;
+        DragQueryFile(wParam, i, fileName, MAX_PATH);
+        if not IsFileAllowed(fileName, true) then Exit;
+        Filenames := Filenames + '"' + fileName + '"' + ' ';
       end;
-
-      Filenames := Filenames + '"' + fileName + '"' + ' ';
+      Filenames := Copy(Filenames, 1, length(Filenames)-1);
+    finally
+      DragFinish(wParam);
     end;
-    Filenames := copy(Filenames, 1, length(Filenames)-1);
-
-    DragFinish(wParam);
 
     hDialog := DialogHandle;
     hFilename := GetDlgItem(hDialog, ID_FILENAME_EDIT);
+    if hFilename = 0 then RaiseLastOSError;
     SendMessage(hFilename, WM_SETTEXT, 0, DWord(PChar(Filenames)));
 
     SendMessage(hDialog, WM_COMMAND, IDOK, 0);
   end;
 end;
 
-procedure TDragDropOpenDlg.OpenDialog1Show(Sender: TObject);
+procedure TDragDropOpenDlg.DialogShow(Sender: TObject);
 var
   hDialog: THandle;
   rect: TRect;
   hEdit: THandle;
   f: TMethod;
 begin
-  hDialog := DialogHandle;
-  GetWindowRect(hDialog, rect);
-  SetWindowPos(hDialog, 0, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top
-    + 25*2, SWP_NOMOVE);
-  hEdit := CreateWindowEx(WS_EX_CLIENTEDGE, 'EDIT', '', WS_VISIBLE or WS_CHILD,
-    195, rect.Bottom - rect.Top - 27, 150, 20, hDialog, ID_DROP_FIELD, 0, nil);
-  if hEdit = 0 then RaiseLastOSError;
+  if FDNDArea then
+  begin
+    hDialog := DialogHandle;
+    GetWindowRect(hDialog, rect);
+    SetWindowPos(hDialog, 0, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top
+      + 25*2, SWP_NOMOVE);
+    hEdit := CreateWindowEx(WS_EX_CLIENTEDGE, 'EDIT', 'Drag''n''Drop', WS_VISIBLE or WS_CHILD,
+      5, rect.Bottom - rect.Top - 27, 89, 35, hDialog, ID_DROP_FIELD, 0, nil);
+    if hEdit = 0 then RaiseLastOSError;
 
-  FPrevWndProc := GetWindowLongPtr(hEdit, GWLP_WNDPROC);
+    FPrevWndProc := GetWindowLongPtr(hEdit, GWLP_WNDPROC);
 
-  f.Code := @TDragDropOpenDlg.msgr;
-  f.Data := Self;
-  MsgProcPointer := MethodPtr.MakeProcInstance(f);
+    f.Code := @TDragDropOpenDlg.DropGroundWndProc;
+    f.Data := Self;
+    MsgProcPointer := MethodPtr.MakeProcInstance(f);
 
-  // Problem: Kann es zu Komplikationen mit mehreren msg handlern kommen?
-  // (Beim vermischten register+unregister !)
+    SetWindowLongPtr(hEdit, GWLP_WNDPROC, LONG_PTR(MsgProcPointer));
+    DragAcceptFiles(hEdit, true);
+  end;
 
-  SetWindowLongPtr(hEdit, GWLP_WNDPROC, LONG_PTR(MsgProcPointer));
-  DragAcceptFiles(hEdit, true);
+  if Assigned(FOnShow) then FOnShow(Sender);
 end;
 
-procedure TDragDropOpenDlg.OpenDialog1Close(Sender: TObject);
+procedure TDragDropOpenDlg.DialogClose(Sender: TObject);
 var
   hDialog: THandle;
   hEdit: THandle;
 begin
-  hDialog := DialogHandle;
-  hEdit := GetDlgItem(hDialog, ID_DROP_FIELD);
+  if FDNDArea then
+  begin
+    hDialog := DialogHandle;
+    hEdit := GetDlgItem(hDialog, ID_DROP_FIELD);
 
-  DragAcceptFiles(hEdit, false);
-  SetWindowLongPtr(hEdit, GWLP_WNDPROC, FPrevWndProc);
+    DragAcceptFiles(hEdit, false);
+    SetWindowLongPtr(hEdit, GWLP_WNDPROC, FPrevWndProc);
+  end;
+
+  if Assigned(FOnClose) then FOnClose(Sender);
 end;
 
 constructor TDragDropOpenDlg.Create(AOwner: TComponent);
 begin
   inherited;
 
-  // TODO: Als Wrapper, damit auch weiter verwendbar!
-  OnClose := OpenDialog1Close;
-  OnShow := OpenDialog1Show;
+  // In my opinion these options are neccessary for an open dialog!
+  Options := Options + [ofFileMustExist];
+  // Options := Options + [ofPathMustExist];
+
+  inherited OnClose := DialogClose;
+  inherited OnShow := DialogShow;
 end;
 
+initialization
+  {$IF DECLARED(UseLatestCommonDialogs)}
+  Dialogs.UseLatestCommonDialogs := true;
+  {$IFEND}
 end.
