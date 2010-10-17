@@ -185,6 +185,8 @@ constructor TDragDropOpenDlg.Create(AOwner: TComponent);
 begin
   inherited;
 
+  FDNDArea := true;
+
   // In my opinion these options are neccessary for an open dialog!
   Options := Options + [ofFileMustExist];
   // Options := Options + [ofPathMustExist];
