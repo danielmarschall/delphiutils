@@ -4,7 +4,8 @@ uses
   Forms,
   Main in 'Main.pas' {MainForm},
   FullYearCalendar in 'FullYearCalendar.pas',
-  NoDoubleStart in 'NoDoubleStart.pas';
+  NoDoubleStart in 'NoDoubleStart.pas',
+  Functions in 'Functions.pas';
 
 {$R *.res}
 

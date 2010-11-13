@@ -1,0 +1,28 @@
+Anforderungen für einen "Statusmonitor"
+
+Ein Statusmonitor hat die Aufgabe, den "Status" eines Dienstes
+zu indizieren. Es kann nur der Zustand "OK" oder "Warning"
+angenommen werden.
+
+Die Anforderungen hierfür sind:
+
+1. Der Service MUSS stets erreichbar sein.
+   Ist der Host "down", entsteht eine Warnung.
+2. Als Protokoll SOLLTE "http" verwendet werden.
+   "https" Verbindungen werden aufgrund der Kompatibilität
+    nicht empfohlen.
+3. Der Statusmonitor MUSS erreichbar sein ohne jegliche
+   erforderliche POST oder Authentifikationsdaten (Passwort).
+4. Es MUSS einer der folgenden Kommentare sich in der Ausgabe
+   befinden:
+   <!-- STATUS: OK -->
+   <!-- STATUS: WARNING -->
+5. Es MUSS die Groß- und Kleinschreibung und alle Leerzeichen
+   beachtet werden.
+6. "OK" und "WARNING" DÜRFEN NICHT gemeinsam auftreten.
+7. Es SOLLTE folgende Kopfzeile in der HTTP-Response gesendet
+   werden:
+   X-Status: OK
+   X-Status: Warning
+
+Stand: 12.11.2010	Daniel Marschall	ViaThinkSoft
