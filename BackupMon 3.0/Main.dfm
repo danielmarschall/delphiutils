@@ -36,7 +36,7 @@ object MainForm: TMainForm
     ColWidths = (
       214
       359
-      111)
+      149)
   end
   object Panel1: TPanel
     Left = 0
@@ -116,6 +116,7 @@ object MainForm: TMainForm
     end
     object Checknow1: TMenuItem
       Caption = 'Check now'
+      OnClick = Checknow1Click
     end
     object N1: TMenuItem
       Caption = '-'
@@ -130,14 +131,14 @@ object MainForm: TMainForm
     end
   end
   object InitTimer: TTimer
-    Interval = 10000
+    Interval = 300000
     OnTimer = InitTimerTimer
     Left = 8
     Top = 80
   end
   object LoopTimer: TTimer
     Enabled = False
-    Interval = 60000
+    Interval = 3600000
     OnTimer = LoopTimerTimer
     Left = 40
     Top = 80

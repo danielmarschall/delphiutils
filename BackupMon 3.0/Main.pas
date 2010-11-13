@@ -1,5 +1,12 @@
 unit Main;
 
+(*
+
+bug: wenn man einen eintrag ändert oder hinzufügt, werden alle "status" auf unknown zurückgesetzt
+td: aktualisierenbutton/f5 erlauben
+
+*)
+
 interface
 
 uses
@@ -48,6 +55,7 @@ type
     procedure InitTimerTimer(Sender: TObject);
     procedure LoopTimerTimer(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure Checknow1Click(Sender: TObject);
   private
     RealClose: boolean;
     WarnAtConnectivityFailure: boolean;
@@ -57,8 +65,8 @@ type
       message WM_QUERYENDSESSION;
     procedure NotifyIconChange(dwMessage: Cardinal);
     procedure LoadConfig;
-    procedure ProcessStatMon(MonitorUrl, ServerName: string; Silent: boolean);
-    procedure ProcessAll(Silent: boolean);
+    procedure ProcessStatMon(i: integer; ShowSuccess: boolean);
+    procedure ProcessAll(ShowSuccess: boolean);
   public
     procedure Vordergrund;
     procedure LoadList;
@@ -68,6 +76,8 @@ var
   MainForm: TMainForm;
 
 implementation
+
+{$R StatusMonManifest.res}
 
 {$R *.dfm}
 
@@ -175,11 +185,23 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
-    if reg.OpenKeyReadOnly('\Software\ViaThinkSoft\StatusMon\3.0\Settings\') then
+    if reg.OpenKey('\Software\ViaThinkSoft\StatusMon\3.0\Settings\', true) then
     begin
-      InitTimer.Interval := reg.ReadInteger('InitTimerInterval');
-      LoopTimer.Interval := reg.ReadInteger('LoopTimerInterval');
-      WarnAtConnectivityFailure := reg.ReadBool('WarnAtConnectivityFailure');
+      if reg.ValueExists('InitTimerInterval') then
+        InitTimer.Interval := reg.ReadInteger('InitTimerInterval')
+      else
+        reg.WriteInteger('InitTimerInterval', InitTimer.Interval);
+
+      if reg.ValueExists('LoopTimerInterval') then
+        LoopTimer.Interval := reg.ReadInteger('LoopTimerInterval')
+      else
+        reg.WriteInteger('LoopTimerInterval', LoopTimer.Interval);
+
+      if reg.ValueExists('WarnAtConnectivityFailure') then
+        WarnAtConnectivityFailure := reg.ReadBool('WarnAtConnectivityFailure')
+      else
+        reg.WriteBool('WarnAtConnectivityFailure', WarnAtConnectivityFailure);
+
       reg.CloseKey;
     end;
   finally
@@ -221,7 +243,7 @@ end;
 
 procedure TMainForm.LoopTimerTimer(Sender: TObject);
 begin
-  ProcessAll(true);
+  ProcessAll(false);
 end;
 
 procedure TMainForm.FormShow(Sender: TObject);
@@ -245,18 +267,17 @@ begin
   ShellExecute(Handle, 'open', PChar(StringGrid1.Rows[StringGrid1.Row].Strings[1]), '', '', SW_SHOW)
 end;
 
-procedure TMainForm.ProcessAll(Silent: boolean);
+procedure TMainForm.ProcessAll(ShowSuccess: boolean);
 var
   i: integer;
 begin
   for i := 1 to StringGrid1.RowCount - 1 do
   begin
-    ProcessStatMon(StringGrid1.Rows[i].Strings[1], StringGrid1.Rows[i].Strings[0], Silent);
+    ProcessStatMon(i, ShowSuccess);
   end;
 end;
 
-procedure TMainForm.ProcessStatMon(MonitorUrl, ServerName: string;
-  Silent: boolean);
+procedure TMainForm.ProcessStatMon(i: integer; ShowSuccess: boolean);
 resourcestring
   LNG_CAPTION = 'Status Monitor Alert';
   LNG_CAPTION_OK = 'Status Monitor Check';
@@ -267,22 +288,43 @@ resourcestring
   LNG_SERVER_DOWN = 'Es konnte keine Verbindung zum Status-Monitor "%s" hergestellt werden, OBWOHL eine Internetverbindung besteht! Ping-Fenster öffnen?' + #13#10#13#10 + 'Monitor-URL: %s';
 var
   x: TMonitorState;
+  MonitorUrl, ServerName: string;
 begin
+  ServerName := StringGrid1.Rows[i].Strings[0];
+  MonitorUrl := StringGrid1.Rows[i].Strings[1];
+
+  StringGrid1.Rows[i].Strings[2] := 'Checking...';
+  Application.ProcessMessages;
+
   x := DeterminateMonitorState(MonitorUrl);
 
   if x = msOK then
   begin
-    MessageBox(Handle, PChar(Format(LNG_STATUS_OK, [ServerName, MonitorUrl])), PChar(LNG_CAPTION_OK), MB_ICONINFORMATION or MB_OK);
+    StringGrid1.Rows[i].Strings[2] := 'OK';
+    if ShowSuccess then
+    begin
+      MessageBox(Handle, PChar(Format(LNG_STATUS_OK, [ServerName, MonitorUrl])), PChar(LNG_CAPTION_OK), MB_ICONINFORMATION or MB_OK);
+    end;
   end
   else if x = msStatusWarning then
   begin
+    StringGrid1.Rows[i].Strings[2] := 'Warning';
     if MessageBox(Handle, PChar(Format(LNG_STATUS_WARNING, [ServerName, MonitorUrl])), PChar(LNG_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
       ShellExecute(Handle, 'open', PChar(MonitorUrl), '', '', SW_NORMAL);
     end;
   end
-  else if x = msMonitorFailure then
+  else if x = msMonitorParseError then
   begin
+    StringGrid1.Rows[i].Strings[2] := 'Parse error';
+    if MessageBox(Handle, PChar(Format(LNG_MONITOR_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
+    begin
+      ShellExecute(Handle, 'open', PChar(MonitorUrl), '', '', SW_NORMAL);
+    end;
+  end
+  else if x = msMonitorGeneralError then
+  begin
+    StringGrid1.Rows[i].Strings[2] := 'General error';
     if MessageBox(Handle, PChar(Format(LNG_MONITOR_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
       ShellExecute(Handle, 'open', PChar(MonitorUrl), '', '', SW_NORMAL);
@@ -290,6 +332,7 @@ begin
   end
   else if x = msServerDown then
   begin
+    StringGrid1.Rows[i].Strings[2] := 'Server down';
     // Es besteht eine Internetverbindung, daher ist wohl was mit dem
     // Server nicht in Ordnung
 
@@ -300,6 +343,7 @@ begin
   end
   else if x = msInternetBroken then
   begin
+    StringGrid1.Rows[i].Strings[2] := 'Unknown (Internet)';
     if not WarnAtConnectivityFailure then
     begin
       if MessageBox(Handle, PChar(Format(LNG_CONNECTIVITY_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
@@ -364,13 +408,22 @@ begin
 end;
 
 procedure TMainForm.Button1Click(Sender: TObject);
+resourcestring
+  LNG_CAPTION_OK = 'Tests abgeschlossen';
+  LNG_DONE = 'Alle Tests wurden abgeschlossen.';
 begin
   ProcessAll(false);
+  MessageBox(Handle, PChar(LNG_DONE), PChar(LNG_CAPTION_OK), MB_ICONINFORMATION or MB_OK);
 end;
 
 procedure TMainForm.Button5Click(Sender: TObject);
 begin
   Close;
+end;
+
+procedure TMainForm.Checknow1Click(Sender: TObject);
+begin
+  ProcessStatMon(StringGrid1.Row, true);
 end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

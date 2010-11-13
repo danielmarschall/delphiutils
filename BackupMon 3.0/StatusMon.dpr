@@ -12,6 +12,7 @@ uses
 
 begin
   Application.Initialize;
+  Application.ShowMainForm := false;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TEditForm, EditForm);
   Application.Run;

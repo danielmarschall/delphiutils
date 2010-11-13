@@ -6,8 +6,8 @@ uses
   SysUtils, IdHTTP;
 
 type
-  TMonitorState = (msOK, msStatusWarning, msMonitorFailure,
-    msServerDown, msInternetBroken);
+  TMonitorState = (msOK, msStatusWarning, msMonitorParseError,
+    msMonitorGeneralError, msServerDown, msInternetBroken);
 
 function DeterminateMonitorState(MonitorUrl: String): TMonitorState;
 
@@ -40,11 +40,16 @@ resourcestring
   OK_COMMENT = '<!-- STATUS: OK -->';
   WARNING_COMMENT = '<!-- STATUS: WARNING -->';
 begin
+  http := TIdHTTP.Create;
   try
-    http := TIdHTTP.Create;
     try
       s := http.Get(MonitorUrl);
-      if AnsiPos(OK_COMMENT, s) > 0 then
+      if (AnsiPos(OK_COMMENT, s) > 0) and
+         (AnsiPos(WARNING_COMMENT, s) > 0) then
+      begin
+        result := msMonitorParseError;
+      end
+      else if AnsiPos(OK_COMMENT, s) > 0 then
       begin
         result := msOk;
       end
@@ -54,22 +59,29 @@ begin
       end
       else
       begin
-        result := msMonitorFailure;
+        result := msMonitorParseError;
       end;
-    finally
-      http.Free;
-    end;
-  except
-    if InternetConnectivity() then
-    begin
-      result := msServerDown;
-    end
-    else
-    begin
-      result := msInternetBroken;
-    end;
+    except
+      if http.Response.ResponseCode <> -1 then
+      begin
+        result := msMonitorGeneralError;
+      end
+      else
+      begin
+        if InternetConnectivity() then
+        begin
+          result := msServerDown;
+        end
+        else
+        begin
+          result := msInternetBroken;
+        end;
+      end;
 
-    // raise;
+      // raise;
+    end;
+  finally
+    http.Free;
   end;
 end;
 
