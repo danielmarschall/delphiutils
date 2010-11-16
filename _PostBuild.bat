@@ -17,5 +17,10 @@ call _Batch\processDir.bat "Uhrersatz (Atomuhr)"
 call _Batch\processDir.bat "Units"
 call _Batch\processDir.bat "umlaut-Ersetzer"
 call _Batch\processDir.bat "Dreisatz"
-call _Batch\processDir.bat "BackupMon 3.0"
 call _Batch\processDir.bat "."
+
+call _Batch\processDir.bat "StatusMon 3.0"
+cd "StatusMon 3.0"
+"C:\Programme\Inno Setup 5\iscc.exe" "StatusMon.iss"
+cd ..
+call _Batch\processDir.bat "StatusMon 3.0\Output"
