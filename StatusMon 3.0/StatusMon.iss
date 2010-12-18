@@ -37,6 +37,10 @@ Name: "autostart"; Description: "Starte automatisch mit &Windows"; GroupDescript
 [Files]
 Source: "StatusMon.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "examples\*.*"; DestDir: "{app}\examples"
+Source: "examples\joomla_version\*.*"; DestDir: "{app}\examples\joomla_version"
+Source: "examples\phpbb3_version\*.*"; DestDir: "{app}\examples\phpbb3_version"
+Source: "examples\verteiler\*.*"; DestDir: "{app}\examples\verteiler"
+Source: "examples\positive_responder\*.*"; DestDir: "{app}\examples\positive_responder"
 
 [Icons]
 Name: "{group}\Webseiten\ViaThinkSoft"; Filename: "http://www.viathinksoft.de/"

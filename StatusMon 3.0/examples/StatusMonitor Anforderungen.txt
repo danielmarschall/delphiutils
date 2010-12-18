@@ -1,7 +1,7 @@
-Anforderungen für einen "Statusmonitor"
+Anforderungen an einen "Statusmonitor"
 
-Ein Statusmonitor hat die Aufgabe, den "Status" eines Dienstes
-zu indizieren. Es kann nur der Zustand "OK" oder "Warning"
+Ein Statusmonitor hat die Aufgabe, den Status eines Dienstes
+zu indizieren. Es kann nur der Zustand "OK" oder "Warnung"
 angenommen werden.
 
 Die Anforderungen hierfür sind:

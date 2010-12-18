@@ -43,6 +43,7 @@ begin
   http := TIdHTTP.Create;
   try
     try
+      http.HandleRedirects := true;
       s := http.Get(MonitorUrl);
       if (AnsiPos(OK_COMMENT, s) > 0) and
          (AnsiPos(WARNING_COMMENT, s) > 0) then

@@ -5,15 +5,15 @@ unit Main;
 bug: wenn man einen eintrag ändert oder hinzufügt, werden alle "status" auf unknown zurückgesetzt
 td: aktualisierenbutton/f5 erlauben
 del-button...
-automatisch auf updates prüfen?
 icon: gray(internetdown),red,green
 reg-write fehler erkennen
-td: nur 1 instanz
 
 Future
 ------
 
-- Rote Einträge bei Fehlern?
+- Rote Einträge bei Fehlern? (VCL Problem)
+- XP Bubble verwenden?
+- Toolbar / ApplicationEvents
 
 *)
 
@@ -21,7 +21,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ShellAPI, Menus, Registry, Grids, StdCtrls, ExtCtrls;
+  Dialogs, ShellAPI, Menus, Registry, Grids, StdCtrls, ExtCtrls, ImgList;
 
 const
   WM_TASKABAREVENT = WM_USER+1; //Taskbar message
@@ -69,6 +69,7 @@ type
     UpdateTimer: TTimer;
     N5: TMenuItem;
     N6: TMenuItem;
+    ImageList1: TImageList;
     procedure FormDestroy(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure Anzeigen1Click(Sender: TObject);
@@ -119,6 +120,7 @@ type
     function GetCurrentMonitorURL: string;
     procedure Vordergrund;
     procedure LoadList;
+    function Status: boolean;
     // procedure RightAlignHelpMenuItem;
   end;
 
@@ -133,7 +135,6 @@ implementation
 
 uses
   Functions, ServiceEdit, StatusMonFuncs, About, Common;
-
 
 type
   TExtended = packed record
@@ -211,13 +212,21 @@ end;
 procedure TMainForm.NotifyIconChange(dwMessage: Cardinal);
 var
   NotifyIconData: TNotifyIconData;
+  ico: TIcon;
 begin
   Fillchar(NotifyIconData,Sizeof(NotifyIconData), 0);
   NotifyIconData.cbSize := Sizeof(NotifyIconData);
   NotifyIconData.Wnd    := Handle;
   NotifyIconData.uFlags := NIF_MESSAGE or NIF_ICON or NIF_TIP;
   NotifyIconData.uCallbackMessage := WM_TASKABAREVENT;
-  NotifyIconData.hIcon := Application.Icon.Handle;
+
+  ico := TIcon.Create;
+  if Status then
+    ImageList1.GetIcon(0, ico)
+  else
+    ImageList1.GetIcon(1, ico);
+  NotifyIconData.hIcon := ico.Handle;
+
   NotifyIconData.szTip := 'ViaThinkSoft Status Monitor 3.0';
   Shell_NotifyIcon(dwMessage, @NotifyIconData);
 end;
@@ -302,6 +311,7 @@ end;
 
 procedure TMainForm.MAboutClick(Sender: TObject);
 begin
+  AboutForm.PopupParent := Screen.ActiveForm; // Workaround
   AboutForm.ShowModal;
 end;
 
@@ -498,6 +508,7 @@ begin
   if x = msOK then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_OK;
+    NotifyIconChange(NIM_MODIFY);
     if ShowSuccess then
     begin
       MessageBox(Handle, PChar(Format(LNG_ALERT_STATUS_OK, [ServerName, MonitorUrl])), PChar(LNG_CHECKALL_FINISHED_CAPTION), MB_ICONINFORMATION or MB_OK);
@@ -506,6 +517,7 @@ begin
   else if x = msStatusWarning then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_WARNING;
+    NotifyIconChange(NIM_MODIFY);
     if MessageBox(Handle, PChar(Format(LNG_ALERT_STATUS_WARNING, [ServerName, MonitorUrl])), PChar(LNG_ALERT_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
       ShellExecute(Handle, 'open', PChar(MonitorUrl), '', '', SW_NORMAL);
@@ -514,6 +526,7 @@ begin
   else if x = msMonitorParseError then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_PARSEERROR;
+    NotifyIconChange(NIM_MODIFY);
     if MessageBox(Handle, PChar(Format(LNG_ALERT_MONITOR_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_ALERT_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
       ShellExecute(Handle, 'open', PChar(MonitorUrl), '', '', SW_NORMAL);
@@ -522,6 +535,7 @@ begin
   else if x = msMonitorGeneralError then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_GENERALERROR;
+    NotifyIconChange(NIM_MODIFY);
     if MessageBox(Handle, PChar(Format(LNG_ALERT_MONITOR_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_ALERT_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
       ShellExecute(Handle, 'open', PChar(MonitorUrl), '', '', SW_NORMAL);
@@ -530,6 +544,7 @@ begin
   else if x = msServerDown then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_SERVERDOWN;
+    NotifyIconChange(NIM_MODIFY);
     // Es besteht eine Internetverbindung, daher ist wohl was mit dem
     // Server nicht in Ordnung
 
@@ -541,6 +556,7 @@ begin
   else if x = msInternetBroken then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_INTERNETBROKEN;
+    NotifyIconChange(NIM_MODIFY);
     if not WarnAtConnectivityFailure then
     begin
       if MessageBox(Handle, PChar(Format(LNG_ALERT_CONNECTIVITY_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_ALERT_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
@@ -549,6 +565,25 @@ begin
       end;
     end;
   end;
+end;
+
+function TMainForm.Status: boolean;
+var
+  i: integer;
+  s: string;
+begin
+  for i := 1 to MonitorGrid.RowCount - 1 do
+  begin
+    s := MonitorGrid.Cells[2, i];
+    if (s <> LNG_STAT_OK) and (s <> LNG_STAT_UNKNOWN) and
+       (s <> LNG_STAT_QUEUE) and (s <> LNG_STAT_CHECKING) and
+       (s <> '') then
+    begin
+      result := false;
+      exit;
+    end;
+  end;
+  result := true;
 end;
 
 // Ref: http://delphi.about.com/od/adptips2006/qt/rightalignmenu.htm
@@ -662,7 +697,7 @@ begin
   CanClose := RealClose;
 end;
 
-procedure TMainForm.OnQueryEndSession;
+procedure TMainForm.OnQueryEndSession(var Msg: TWMQueryEndSession);
 begin
   RealClose := true;
   Close;
