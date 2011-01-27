@@ -7,9 +7,6 @@ QuerySystemMenu.pas
 
 *)
 
-// WM_UNINITMENUPOPUP is not implemented in Win 95.
-{.$DEFINE USE_WM_UNINITMENUPOPUP}
-
 interface
 
 // TODO: DefWindowProc() verwenden?
@@ -54,6 +51,7 @@ type
     FSystemMenuOpened: boolean;
   protected
     function MsgProc(Handle: HWnd; Msg: UInt; WParam: Windows.WParam; LParam: Windows.LParam): LResult; override; stdcall;
+    function IsSystemMenuSubmenu(h: hwnd): boolean;
   published
     property IsSystemMenuOpened: boolean read FSystemMenuOpened;
     property OnSystemMenuOpen: TNotifyEvent read FOnSystemMenuOpen write FOnSystemMenuOpen;
@@ -150,38 +148,47 @@ end;
 
 { TQuerySystemMenu }
 
+function TQuerySystemMenu.IsSystemMenuSubmenu(h: hwnd): boolean;
+var
+  sym: hwnd;
+begin
+  sym := GetSystemMenu(FHandle, False);
+
+  repeat
+    if h = sym then
+    begin
+      result := true;
+      exit;
+    end;
+    h := GetParent(h);
+  until h = 0;
+
+  result := false;
+end;
+
 function TQuerySystemMenu.MsgProc(Handle: HWnd; Msg: UInt; WParam: Windows.WParam; LParam: Windows.LParam): LResult;
 begin
-  {$IFDEF USE_WM_UNINITMENUPOPUP}
-  if Msg = WM_UNINITMENUPOPUP then
-  {$ELSE}
-  // WM_INITMENUPOPUP wird benötigt, falls man z.B. direkt in das
-  // MainMenu mit einem Klick wechselt.
-  // TODO: Problem, wenn das System-Menu Untermenü-Punkte besitzt?
-  if FSystemMenuOpened and ((Msg = WM_EXITMENULOOP)
-    or (Msg = WM_INITMENUPOPUP)) then
-  {$ENDIF}
+  if FSystemMenuOpened then
   begin
-    {$IFDEF USE_WM_UNINITMENUPOPUP}
-    // if Cardinal(WParam) = GetSystemMenu(FHandle, False) then
-    if HiWord(lParam) = MF_SYSMENU then
+    // WM_UNINITMENUPOPUP ist nicht in Windows 95 implementiert.
+    // Daher wird WM_EXITMENULOOP verwendet.
+    // WM_INITMENUPOPUP wird benötigt, falls man z.B. direkt in das
+    // MainMenu mit einem Klick wechselt. (kein WM_EXITMENULOOP wird aufgerufen)
+
+    if ((Msg = WM_UNINITMENUPOPUP) {and IsSystemMenuSubmenu(Cardinal(wParam))} and (HiWord(lParam) = MF_SYSMENU)) or
+       (Msg = WM_EXITMENULOOP) or
+       ((Msg = WM_INITMENUPOPUP) and not IsSystemMenuSubmenu(Cardinal(WParam))) then
     begin
-    {$ENDIF}
       FSystemMenuOpened := false;
       if Assigned(FOnSystemMenuClose) then
       begin
         FOnSystemMenuClose(Self);
       end;
-    {$IFDEF USE_WM_UNINITMENUPOPUP}
     end;
-    {$ENDIF}
-  end;
-
-  // TODO bug: löst bei evtl vorhandenen submenus öfters aus
-  if Msg = WM_INITMENUPOPUP then
+  end
+  else
   begin
-    // if Cardinal(WParam) = GetSystemMenu(FHandle, False) then
-    if LongBool(HiWord(lParam)) then
+    if (Msg = WM_INITMENUPOPUP) {and IsSystemMenuSubmenu(Cardinal(wParam))} and LongBool(HiWord(lParam)) then
     begin
       FSystemMenuOpened := true;
       if Assigned(FOnSystemMenuOpen) then
