@@ -3,9 +3,12 @@ unit QuerySystemMenu;
 (*
 
 QuerySystemMenu.pas
-(C) 2010 Daniel Marschall
+(C) 2010 - 2011 Daniel Marschall
 
 *)
+
+// WM_UNINITMENUPOPUP is not implemented in Win 95.
+{.$DEFINE USE_WM_UNINITMENUPOPUP}
 
 interface
 
@@ -163,17 +166,25 @@ begin
       end;
     end;
   end;
+  {$IFDEF USE_WM_UNINITMENUPOPUP}
   if Msg = WM_UNINITMENUPOPUP then
+  {$ELSE}
+  if FSystemMenuOpened and (Msg = WM_EXITMENULOOP) then
+  {$ENDIF}
   begin
+    {$IFDEF USE_WM_UNINITMENUPOPUP}
     // if Cardinal(WParam) = GetSystemMenu(FHandle, False) then
     if HiWord(lParam) = MF_SYSMENU then
     begin
+    {$ENDIF}
       FSystemMenuOpened := false;
       if Assigned(FOnSystemMenuClose) then
       begin
         FOnSystemMenuClose(Self);
       end;
+    {$IFDEF USE_WM_UNINITMENUPOPUP}
     end;
+    {$ENDIF}
   end;
 
   result := inherited MsgProc(Handle, Msg, WParam, LParam);
