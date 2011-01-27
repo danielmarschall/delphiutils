@@ -4,13 +4,25 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, QuerySystemMenu;
+  Dialogs, StdCtrls, ExtCtrls, QuerySystemMenu, Menus;
 
 type
   TMainForm = class(TForm)
     CheckBox1: TCheckBox;
     Timer1: TTimer;
     Label1: TLabel;
+    MainMenu1: TMainMenu;
+    N12231: TMenuItem;
+    N123124235425541: TMenuItem;
+    N45koiaejfunsdkf1: TMenuItem;
+    erlknf1: TMenuItem;
+    fkjn1: TMenuItem;
+    fe1: TMenuItem;
+    flmnakwjfnajwrngl1: TMenuItem;
+    ewfkjanwrgboinginrginaikrwngka1: TMenuItem;
+    asdasdjknsafjnaskfnakjf1: TMenuItem;
+    askfnjakfnkjasndfkjandf1: TMenuItem;
+    fkjafnjkasndf1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);

@@ -10,6 +10,7 @@ object MainForm: TMainForm
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
+  Menu = MainMenu1
   OldCreateOrder = False
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -42,5 +43,42 @@ object MainForm: TMainForm
     OnTimer = Timer1Timer
     Left = 400
     Top = 288
+  end
+  object MainMenu1: TMainMenu
+    Left = 384
+    Top = 96
+    object N12231: TMenuItem
+      Caption = '1223'
+      object fe1: TMenuItem
+        Caption = 'fe'
+      end
+    end
+    object N123124235425541: TMenuItem
+      Caption = 'ewfewekfn'
+      object fkjn1: TMenuItem
+        Caption = 'fkjn'
+      end
+    end
+    object N45koiaejfunsdkf1: TMenuItem
+      Caption = '45koiaejfunsdkf'
+      object erlknf1: TMenuItem
+        Caption = 'erlknf'
+      end
+    end
+    object flmnakwjfnajwrngl1: TMenuItem
+      Caption = 'flmnakwjfnajwrngl '
+      object fkjafnjkasndf1: TMenuItem
+        Caption = 'fkjafnjkasndf'
+      end
+    end
+    object ewfkjanwrgboinginrginaikrwngka1: TMenuItem
+      Caption = 'k'
+      object asdasdjknsafjnaskfnakjf1: TMenuItem
+        Caption = 'asdasdjknsafjnaskfnakjf'
+      end
+    end
+    object askfnjakfnkjasndfkjandf1: TMenuItem
+      Caption = 'askfnjakfnkjasndfkjandf'
+    end
   end
 end

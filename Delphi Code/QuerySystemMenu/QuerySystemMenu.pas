@@ -152,24 +152,14 @@ end;
 
 function TQuerySystemMenu.MsgProc(Handle: HWnd; Msg: UInt; WParam: Windows.WParam; LParam: Windows.LParam): LResult;
 begin
-  // TODO bug: löst bei evtl vorhandenen submenus öfters aus
-  
-  if Msg = WM_INITMENUPOPUP then
-  begin
-    // if Cardinal(WParam) = GetSystemMenu(FHandle, False) then
-    if LongBool(HiWord(lParam)) then
-    begin
-      FSystemMenuOpened := true;
-      if Assigned(FOnSystemMenuOpen) then
-      begin
-        FOnSystemMenuOpen(Self);
-      end;
-    end;
-  end;
   {$IFDEF USE_WM_UNINITMENUPOPUP}
   if Msg = WM_UNINITMENUPOPUP then
   {$ELSE}
-  if FSystemMenuOpened and (Msg = WM_EXITMENULOOP) then
+  // WM_INITMENUPOPUP wird benötigt, falls man z.B. direkt in das
+  // MainMenu mit einem Klick wechselt.
+  // TODO: Problem, wenn das System-Menu Untermenü-Punkte besitzt?
+  if FSystemMenuOpened and ((Msg = WM_EXITMENULOOP)
+    or (Msg = WM_INITMENUPOPUP)) then
   {$ENDIF}
   begin
     {$IFDEF USE_WM_UNINITMENUPOPUP}
@@ -185,6 +175,20 @@ begin
     {$IFDEF USE_WM_UNINITMENUPOPUP}
     end;
     {$ENDIF}
+  end;
+
+  // TODO bug: löst bei evtl vorhandenen submenus öfters aus
+  if Msg = WM_INITMENUPOPUP then
+  begin
+    // if Cardinal(WParam) = GetSystemMenu(FHandle, False) then
+    if LongBool(HiWord(lParam)) then
+    begin
+      FSystemMenuOpened := true;
+      if Assigned(FOnSystemMenuOpen) then
+      begin
+        FOnSystemMenuOpen(Self);
+      end;
+    end;
   end;
 
   result := inherited MsgProc(Handle, Msg, WParam, LParam);
