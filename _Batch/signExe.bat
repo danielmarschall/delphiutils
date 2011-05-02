@@ -1,7 +1,13 @@
-@echo off
+@echo on
+
+SET XXX=%~f1
+
+cd "%~dp0"
+
+if not exist "%XXX%" goto end
 
 REM Bereits signiert?
-signtool verify /pa "%~f1"
+signtool.exe verify /pa "%XXX%"
 
 IF %ERRORLEVEL% == 0 GOTO end
 
@@ -11,6 +17,8 @@ SET TSA=http://time.certum.pl/
 SET NAME=ViaThinkSoft OpenSource Application
 SET URL=http://www.viathinksoft.de/
 
-if exist "%~f1" signtool sign -d "%NAME%" -du "%URL%" -a -t "%TSA%" "%~f1"
+signtool.exe sign -d "%NAME%" -du "%URL%" -a -t "%TSA%" "%XXX%"
 
 :end
+
+cd ..
