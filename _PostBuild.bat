@@ -19,7 +19,6 @@ call _Batch\processDir.bat "Units"
 call _Batch\processDir.bat "umlaut-Ersetzer"
 call _Batch\processDir.bat "Dreisatz"
 call _Batch\processDir.bat "SignExample"
-pause.
 call _Batch\processDir.bat "."
 
 call _Batch\processDir.bat "StatusMon 3.0"
