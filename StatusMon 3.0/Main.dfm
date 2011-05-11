@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 219
   Top = 164
   Caption = 'ViaThinkSoft Status Monitor'
-  ClientHeight = 472
+  ClientHeight = 492
   ClientWidth = 730
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -23,7 +23,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 730
-    Height = 447
+    Height = 467
     Align = alClient
     ColCount = 3
     DefaultRowHeight = 18
@@ -34,7 +34,7 @@ object MainForm: TMainForm
     TabOrder = 0
     OnDblClick = MonitorGridDblClick
     OnMouseDown = MonitorGridMouseDown
-    ExplicitHeight = 427
+    ExplicitHeight = 447
     ColWidths = (
       214
       359
@@ -42,14 +42,14 @@ object MainForm: TMainForm
   end
   object LastCheckPanel: TPanel
     Left = 0
-    Top = 447
+    Top = 467
     Width = 730
     Height = 25
     Align = alBottom
     BevelOuter = bvNone
     Caption = '...'
     TabOrder = 1
-    ExplicitTop = 427
+    ExplicitTop = 447
   end
   object TrayPopupMenu: TPopupMenu
     Left = 8
@@ -209,7 +209,7 @@ object MainForm: TMainForm
     Left = 8
     Top = 144
     Bitmap = {
-      494C010102000400040010001000FFFFFFFFFF00FFFFFFFFFFFFFFFF424D3600
+      494C010102000400040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -345,6 +345,7 @@ object MainForm: TMainForm
       AE73CFF300000000D6E787E100000000EE2F000000000000FC1F000000000000
       F80F00000000000080080001000000001001000300000000F01F000700000000
       F83F000F00000000E477FE8B00000000CF6BFFDF000000009E75FF7700000000
-      BE7BFFDF00000000FEFFFFFF00000000}
+      BE7BFFDF00000000FEFFFFFF0000000000000000000000000000000000000000
+      000000000000}
   end
 end

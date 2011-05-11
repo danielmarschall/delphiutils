@@ -38,7 +38,25 @@ object MainForm: TMainForm
     ParentFont = False
     TabOrder = 0
   end
+  object Button1: TButton
+    Left = 216
+    Top = 264
+    Width = 75
+    Height = 25
+    Caption = 'Button1'
+    TabOrder = 1
+    OnClick = Button1Click
+  end
+  object Edit1: TEdit
+    Left = 352
+    Top = 224
+    Width = 121
+    Height = 21
+    TabOrder = 2
+    Text = 'tim'
+  end
   object Timer1: TTimer
+    Enabled = False
     Interval = 100
     OnTimer = Timer1Timer
     Left = 400
@@ -80,5 +98,11 @@ object MainForm: TMainForm
     object askfnjakfnkjasndfkjandf1: TMenuItem
       Caption = 'askfnjakfnkjasndfkjandf'
     end
+  end
+  object Timer2: TTimer
+    Interval = 100
+    OnTimer = Timer2Timer
+    Left = 496
+    Top = 184
   end
 end

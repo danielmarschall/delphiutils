@@ -21,6 +21,7 @@ call _Batch\processDir.bat "Dreisatz"
 call _Batch\processDir.bat "SignExample"
 call _Batch\processDir.bat "."
 
+call _Batch\processDir.bat "StatusMon 3.0\Dll-Test"
 call _Batch\processDir.bat "StatusMon 3.0"
 cd "StatusMon 3.0"
 "C:\Programme\Inno Setup 5\iscc.exe" "StatusMon.iss"

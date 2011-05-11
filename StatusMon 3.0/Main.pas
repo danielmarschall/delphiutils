@@ -2,11 +2,23 @@ unit Main;
 
 (*
 
+# download einer primer-tabelle?
+
 bug: wenn man einen eintrag ändert oder hinzufügt, werden alle "status" auf unknown zurückgesetzt
 td: aktualisierenbutton/f5 erlauben
 del-button...
 icon: gray(internetdown),red,green
 reg-write fehler erkennen
+
+statustext einführen (format 2.0)
+
+rote listeneinträge bei fehlern
+
+f5 möglichkeit geben?
+
+nur 1 instanz zulassen
+
+spaltenindizes 0,1,2 in constanten packen
 
 Future
 ------
@@ -106,6 +118,7 @@ type
   private
     RealClose: boolean;
     WarnAtConnectivityFailure: boolean;
+    StatCache: TStringList;
     procedure TaskbarEvent(var Msg: TMessage);
       Message WM_TASKABAREVENT;
     procedure OnQueryEndSession(var Msg: TWMQueryEndSession);
@@ -233,6 +246,7 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  StatCache.Free;
   NotifyIconChange(NIM_DELETE);
 end;
 
@@ -241,6 +255,12 @@ begin
   LastCheckPanel.Caption := Format(LNG_LAST_CHECK, [LNG_LAST_CHECK_UNKNOWN]);
 
   // RightAlignHelpMenuItem;
+
+  StatCache := TStringList.Create;
+
+  // Kommt sicherlich nicht in irgendeiner URL vor!
+  // #0 funktioniert nicht
+  StatCache.NameValueSeparator := #1;
 
   NotifyIconChange(NIM_ADD);
 
@@ -349,6 +369,7 @@ var
   reg: TRegistry;
   st: TStringList;
   i: Integer;
+  MonitorUrl, CachedStat: String;
 begin
   reg := TRegistry.Create;
   st := TStringList.Create;
@@ -364,8 +385,11 @@ begin
         begin
           MonitorGrid.Rows[i+1].Clear;
           MonitorGrid.Rows[i+1].Add(st.Strings[i]);
-          MonitorGrid.Rows[i+1].Add(reg.ReadString(REG_VAL_URL));
-          MonitorGrid.Rows[i+1].Add(LNG_STAT_UNKNOWN);
+          MonitorUrl := reg.ReadString(REG_VAL_URL);
+          MonitorGrid.Rows[i+1].Add(MonitorUrl);
+          CachedStat := StatCache.Values[MonitorUrl];
+          If CachedStat = '' then CachedStat := LNG_STAT_UNKNOWN;
+          MonitorGrid.Rows[i+1].Add(CachedStat);
         end;
       end;
       reg.CloseKey;
@@ -500,6 +524,8 @@ begin
   ServerName := MonitorGrid.Rows[i].Strings[0];
   MonitorUrl := MonitorGrid.Rows[i].Strings[1];
 
+  if MonitorUrl = '' then Exit; // Passiert, wenn Create() aufgehalten wird (z.B. mit ShowMessage)  
+
   MonitorGrid.Rows[i].Strings[2] := LNG_STAT_CHECKING;
   Application.ProcessMessages;
 
@@ -508,6 +534,7 @@ begin
   if x = msOK then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_OK;
+    StatCache.Values[MonitorUrl] := LNG_STAT_OK;
     NotifyIconChange(NIM_MODIFY);
     if ShowSuccess then
     begin
@@ -517,6 +544,7 @@ begin
   else if x = msStatusWarning then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_WARNING;
+    StatCache.Values[MonitorUrl] := LNG_STAT_WARNING;
     NotifyIconChange(NIM_MODIFY);
     if MessageBox(Handle, PChar(Format(LNG_ALERT_STATUS_WARNING, [ServerName, MonitorUrl])), PChar(LNG_ALERT_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
@@ -526,6 +554,7 @@ begin
   else if x = msMonitorParseError then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_PARSEERROR;
+    StatCache.Values[MonitorUrl] := LNG_STAT_PARSEERROR;
     NotifyIconChange(NIM_MODIFY);
     if MessageBox(Handle, PChar(Format(LNG_ALERT_MONITOR_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_ALERT_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
@@ -535,6 +564,7 @@ begin
   else if x = msMonitorGeneralError then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_GENERALERROR;
+    StatCache.Values[MonitorUrl] := LNG_STAT_GENERALERROR;
     NotifyIconChange(NIM_MODIFY);
     if MessageBox(Handle, PChar(Format(LNG_ALERT_MONITOR_FAILURE, [ServerName, MonitorUrl])), PChar(LNG_ALERT_CAPTION), MB_ICONWARNING or MB_YESNOCANCEL) = IDYES then
     begin
@@ -544,6 +574,7 @@ begin
   else if x = msServerDown then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_SERVERDOWN;
+    StatCache.Values[MonitorUrl] := LNG_STAT_SERVERDOWN;
     NotifyIconChange(NIM_MODIFY);
     // Es besteht eine Internetverbindung, daher ist wohl was mit dem
     // Server nicht in Ordnung
@@ -556,6 +587,7 @@ begin
   else if x = msInternetBroken then
   begin
     MonitorGrid.Rows[i].Strings[2] := LNG_STAT_INTERNETBROKEN;
+    StatCache.Values[MonitorUrl] := LNG_STAT_INTERNETBROKEN;
     NotifyIconChange(NIM_MODIFY);
     if not WarnAtConnectivityFailure then
     begin
