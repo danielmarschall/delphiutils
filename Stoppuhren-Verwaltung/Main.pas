@@ -59,6 +59,9 @@ type
     procedure AlleUhrenstoppen1Click(Sender: TObject);
   private
     procedure CreateMDIChild(const Name: string);
+  protected
+    procedure SaveSettings;
+    procedure LoadSettings;
   public
     procedure StopAllTimers;
   end;
@@ -70,7 +73,7 @@ implementation
 
 {$R *.dfm}
 
-uses CHILDWIN, about, IniFiles;
+uses CHILDWIN, about, IniFiles, Registry;
 
 var
   StopUhrCount: integer = 1;
@@ -108,15 +111,8 @@ begin
 end;
 
 procedure TMainForm.FormShow(Sender: TObject);
-var
-  x: TMemIniFile;
 begin
-  x := TMemIniFile.Create('Settings.ini');
-  try
-    NureineUhrgleichzeitig1.Checked := x.ReadBool('Settings', 'SingleClockMode', false);
-  finally
-    FreeAndNil(x);
-  end;
+  LoadSettings;
 end;
 
 procedure TMainForm.HelpAbout1Execute(Sender: TObject);
@@ -124,14 +120,30 @@ begin
   AboutBox.ShowModal;
 end;
 
-procedure TMainForm.NureineUhrgleichzeitig1Click(Sender: TObject);
+procedure TMainForm.LoadSettings;
 var
-  x: TMemIniFile;
+  x: TRegIniFile;
 begin
-  x := TMemIniFile.Create('Settings.ini');
+  x := TRegIniFile.Create('Software\ViaThinkSoft\Stoppuhren');
+  try
+    NureineUhrgleichzeitig1.Checked := x.ReadBool('Settings', 'SingleClockMode', false);
+  finally
+    FreeAndNil(x);
+  end;
+end;
+
+procedure TMainForm.NureineUhrgleichzeitig1Click(Sender: TObject);
+begin
+  SaveSettings;
+end;
+
+procedure TMainForm.SaveSettings;
+var
+  x: TRegIniFile;
+begin
+  x := TRegIniFile.Create('Software\ViaThinkSoft\Stoppuhren');
   try
     x.WriteBool('Settings', 'SingleClockMode', NureineUhrgleichzeitig1.Checked);
-    x.UpdateFile;
   finally
     FreeAndNil(x);
   end;
