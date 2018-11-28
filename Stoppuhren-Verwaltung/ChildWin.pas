@@ -21,6 +21,12 @@ type
     StartTime: TDateTime;
     SecondsPrev: integer;
     SecondsTotal: integer;
+  public
+    procedure StartTimer;
+    procedure StopTimer;
+    procedure ResetTimer;
+    procedure StartStopTimer;
+    function TimerIsRunning: boolean;
   end;
 
 implementation
@@ -28,40 +34,18 @@ implementation
 {$R *.dfm}
 
 uses
-  DateUtils, Math;
+  DateUtils, Math, Main;
 
 procedure TMDIChild.Button1Click(Sender: TObject);
 begin
-  if CompareValue(StartTime, 0) <> 0 then
-  begin
-    // Es läuft. Stoppe es
-    SecondsTotal := SecondsPrev + trunc((Now - StartTime) * 24*60*60);
-    SecondsPrev := SecondsTotal;
-    StartTime := 0;
-    memo1.Color := clWindow;
-  end
-  else
-  begin
-    // Es läuft nicht. Starte es.
-    StartTime := Now;
-    memo1.Color := clYellow;
-  end;
+  StartStopTimer;
 end;
 
 procedure TMDIChild.Button2Click(Sender: TObject);
 begin
   if MessageDlg('Stoppuhr ' + Trim(Memo1.Lines.Text) + ' wirklich resetten?', mtConfirmation, mbYesNoCancel, 0) = mrYes then
   begin
-    if CompareValue(StartTime, 0) <> 0 then
-    begin
-      // Es läuft. Starte neu
-      StartTime := Now;
-    end
-    else
-    begin
-      // Es läuft nicht. Resette Zeit
-      SecondsPrev := 0;
-    end;
+    ResetTimer;
   end;
 end;
 
@@ -83,9 +67,64 @@ begin
   Constraints.MaxHeight := Height;
 end;
 
+procedure TMDIChild.ResetTimer;
+begin
+  if TimerIsRunning then
+  begin
+    // Es läuft. Starte neu
+    StartTime := Now;
+  end
+  else
+  begin
+    // Es läuft nicht. Resette Zeit
+    SecondsPrev := 0;
+  end;
+end;
+
+procedure TMDIChild.StartStopTimer;
+begin
+  if TimerIsRunning then
+  begin
+    // Es läuft. Stoppe es
+    StopTimer;
+  end
+  else
+  begin
+    // Es läuft nicht. Starte es.
+    if MainForm.NureineUhrgleichzeitig1.Checked then
+    begin
+      MainForm.StopAllTimers;
+    end;
+
+    StartTimer;
+  end;
+end;
+
+procedure TMDIChild.StartTimer;
+begin
+  if not TimerIsRunning then
+  begin
+    // Es läuft nicht. Starte es.
+    StartTime := Now;
+    memo1.Color := clYellow;
+  end;
+end;
+
+procedure TMDIChild.StopTimer;
+begin
+  if TimerIsRunning then
+  begin
+    // Es läuft. Stoppe es
+    SecondsTotal := SecondsPrev + trunc((Now - StartTime) * 24*60*60);
+    SecondsPrev := SecondsTotal;
+    StartTime := 0;
+    memo1.Color := clWindow;
+  end;
+end;
+
 procedure TMDIChild.Timer1Timer(Sender: TObject);
 begin
-  if CompareValue(StartTime, 0) <> 0 then
+  if TimerIsRunning then
   begin
     SecondsTotal := SecondsPrev + trunc((Now - StartTime) * 24*60*60);
   end
@@ -95,6 +134,11 @@ begin
   end;
 
   label1.Caption := FormatDateTime('hh:nn:ss', SecondsTotal / SecsPerDay);
+end;
+
+function TMDIChild.TimerIsRunning: boolean;
+begin
+  result := CompareValue(StartTime, 0) <> 0;
 end;
 
 end.

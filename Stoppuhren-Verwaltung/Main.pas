@@ -45,16 +45,22 @@ type
     ToolButton10: TToolButton;
     ToolButton11: TToolButton;
     ImageList1: TImageList;
+    Einstellungen1: TMenuItem;
+    NureineUhrgleichzeitig1: TMenuItem;
+    AlleUhrenstoppen1: TMenuItem;
+    N2: TMenuItem;
     procedure FileNew1Execute(Sender: TObject);
     procedure FileOpen1Execute(Sender: TObject);
     procedure HelpAbout1Execute(Sender: TObject);
     procedure FileExit1Execute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure NureineUhrgleichzeitig1Click(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure AlleUhrenstoppen1Click(Sender: TObject);
   private
-    { Private-Deklarationen }
     procedure CreateMDIChild(const Name: string);
   public
-    { Public-Deklarationen }
+    procedure StopAllTimers;
   end;
 
 var
@@ -64,10 +70,15 @@ implementation
 
 {$R *.dfm}
 
-uses CHILDWIN, about;
+uses CHILDWIN, about, IniFiles;
 
 var
   StopUhrCount: integer = 1;
+
+procedure TMainForm.AlleUhrenstoppen1Click(Sender: TObject);
+begin
+  StopAllTimers;
+end;
 
 procedure TMainForm.CreateMDIChild(const Name: string);
 var
@@ -96,9 +107,44 @@ begin
   //CanClose := MessageDlg('Programm wirklich beenden?', mtConfirmation, mbYesNoCancel, 0) = mrYes;
 end;
 
+procedure TMainForm.FormShow(Sender: TObject);
+var
+  x: TMemIniFile;
+begin
+  x := TMemIniFile.Create('Settings.ini');
+  try
+    NureineUhrgleichzeitig1.Checked := x.ReadBool('Settings', 'SingleClockMode', false);
+  finally
+    FreeAndNil(x);
+  end;
+end;
+
 procedure TMainForm.HelpAbout1Execute(Sender: TObject);
 begin
   AboutBox.ShowModal;
+end;
+
+procedure TMainForm.NureineUhrgleichzeitig1Click(Sender: TObject);
+var
+  x: TMemIniFile;
+begin
+  x := TMemIniFile.Create('Settings.ini');
+  try
+    x.WriteBool('Settings', 'SingleClockMode', NureineUhrgleichzeitig1.Checked);
+    x.UpdateFile;
+  finally
+    FreeAndNil(x);
+  end;
+end;
+
+procedure TMainForm.StopAllTimers;
+var
+  i: integer;
+begin
+  for i := 0 to MDIChildCount - 1 do
+  begin
+    TMdiChild(MDIChildren[i]).StopTimer;
+  end;
 end;
 
 procedure TMainForm.FileExit1Execute(Sender: TObject);

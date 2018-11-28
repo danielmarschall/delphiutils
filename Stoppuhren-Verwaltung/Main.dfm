@@ -16,6 +16,7 @@ object MainForm: TMainForm
   Position = poDefault
   WindowMenu = Window1
   OnCloseQuery = FormCloseQuery
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object StatusBar: TStatusBar
@@ -75,11 +76,26 @@ object MainForm: TMainForm
       object FileCloseItem: TMenuItem
         Action = FileClose1
       end
+      object N2: TMenuItem
+        Caption = '-'
+      end
+      object AlleUhrenstoppen1: TMenuItem
+        Caption = 'Alle Uhren stoppen'
+        OnClick = AlleUhrenstoppen1Click
+      end
       object N1: TMenuItem
         Caption = '-'
       end
       object FileExitItem: TMenuItem
         Action = FileExit1
+      end
+    end
+    object Einstellungen1: TMenuItem
+      Caption = 'Einstellungen'
+      object NureineUhrgleichzeitig1: TMenuItem
+        AutoCheck = True
+        Caption = 'Nur eine Uhr gleichzeitig'
+        OnClick = NureineUhrgleichzeitig1Click
       end
     end
     object Window1: TMenuItem
@@ -178,7 +194,7 @@ object MainForm: TMainForm
     Left = 160
     Top = 408
     Bitmap = {
-      494C010112001400100010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010112001400140010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000005000000001002000000000000050
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000

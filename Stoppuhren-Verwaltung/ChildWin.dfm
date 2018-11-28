@@ -43,8 +43,6 @@ object MDIChild: TMDIChild
     Font.Style = []
     ParentFont = False
     TabOrder = 0
-    ExplicitWidth = 273
-    ExplicitHeight = 49
   end
   object Button1: TButton
     Left = 8
@@ -65,8 +63,6 @@ object MDIChild: TMDIChild
     Caption = 'Reset'
     TabOrder = 2
     OnClick = Button2Click
-    ExplicitLeft = 211
-    ExplicitTop = 109
   end
   object Timer1: TTimer
     Interval = 100
