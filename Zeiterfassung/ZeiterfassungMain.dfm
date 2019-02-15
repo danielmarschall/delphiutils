@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 0
   Caption = 'Digitale Zeiterfassung'
   ClientHeight = 485
-  ClientWidth = 852
+  ClientWidth = 908
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,22 +19,23 @@ object Form1: TForm1
   object wwDBGrid1: TwwDBGrid
     Left = 0
     Top = 50
-    Width = 852
+    Width = 908
     Height = 435
     ControlType.Strings = (
       'FREIER_TAG;CheckBox;Wahr;Falsch')
     Selected.Strings = (
-      'WOCHENTAG'#9'2'#9' '
-      'TAG'#9'10'#9'TAG'
-      'FREIER_TAG'#9'6'#9'Frei'
-      'KOMMEN'#9'8'#9'Kommen'
-      'PAUSE_START'#9'8'#9'Pause'
-      'PAUSE_ENDE'#9'8'#9'Ende'
-      'GEHEN'#9'9'#9'Gehen'
-      'SONSTIGER_ABZUG'#9'10'#9'Sonst. Abzug'
-      'ZUHAUSE'#9'11'#9'Arb. zuhause'
-      #220'BERSTUNDEN'#9'15'#9#220'berstunden heute'
-      #220'BERSTUNDEN_SALDO'#9'16'#9#220'berstunden ges.')
+      'WOCHENTAG'#9'2'#9' '#9'T'#9
+      'TAG'#9'10'#9'TAG'#9#9
+      'FREIER_TAG'#9'6'#9'Frei'#9#9
+      'KOMMEN'#9'8'#9'Kommen'#9#9
+      'PAUSE_START'#9'8'#9'Pause'#9#9
+      'PAUSE_ENDE'#9'8'#9'Ende'#9#9
+      'GEHEN'#9'9'#9'Gehen'#9#9
+      'SONSTIGER_ABZUG'#9'10'#9'Sonst. Abzug'#9#9
+      'ZUHAUSE'#9'11'#9'Arb. zuhause'#9#9
+      #220'BERSTUNDEN'#9'15'#9#220'berstunden heute'#9'T'#9
+      #220'BERSTUNDEN_SALDO'#9'16'#9#220'berstunden ges.'#9'T'#9
+      'BEMERKUNG'#9'30'#9'Bemerkung'#9'F')
     IniAttributes.Delimiter = ';;'
     TitleColor = clBtnFace
     FixedCols = 0
@@ -56,30 +57,29 @@ object Form1: TForm1
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 852
+    Width = 908
     Height = 50
     Align = alTop
     TabOrder = 1
-    ExplicitWidth = 827
     DesignSize = (
-      852
+      908
       50)
     object Label1: TLabel
       Left = 208
-      Top = 12
+      Top = 10
       Width = 81
       Height = 13
       Caption = 'Regelarbeitszeit:'
     end
     object Label2: TLabel
       Left = 208
-      Top = 27
+      Top = 25
       Width = 12
       Height = 13
       Caption = '...'
     end
     object Button1: TButton
-      Left = 610
+      Left = 666
       Top = 12
       Width = 53
       Height = 24
@@ -88,10 +88,9 @@ object Form1: TForm1
       TabOrder = 0
       TabStop = False
       OnClick = Button1Click
-      ExplicitLeft = 585
     end
     object DBNavigator1: TDBNavigator
-      Left = 669
+      Left = 725
       Top = 12
       Width = 168
       Height = 25
@@ -99,12 +98,11 @@ object Form1: TForm1
       VisibleButtons = [nbFirst, nbLast, nbInsert, nbDelete, nbPost, nbCancel]
       Anchors = [akTop, akRight]
       TabOrder = 1
-      ExplicitLeft = 644
     end
     object ComboBox1: TComboBox
-      Left = 24
-      Top = 16
-      Width = 169
+      Left = 16
+      Top = 12
+      Width = 177
       Height = 21
       Style = csDropDownList
       ItemHeight = 13
@@ -210,6 +208,12 @@ object Form1: TForm1
       DisplayWidth = 16
       FieldName = #220'BERSTUNDEN_SALDO'
       OnGetText = ADOTable1BERSTUNDEN_SALDOGetText
+    end
+    object ADOTable1BEMERKUNG: TStringField
+      DisplayLabel = 'Bemerkung'
+      DisplayWidth = 30
+      FieldName = 'BEMERKUNG'
+      Size = 100
     end
     object ADOTable1USERNAME: TStringField
       FieldName = 'USERNAME'

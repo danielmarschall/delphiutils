@@ -30,6 +30,7 @@ type
     ComboBox1: TComboBox;
     Label1: TLabel;
     Label2: TLabel;
+    ADOTable1BEMERKUNG: TStringField;
     procedure ADOTable1NewRecord(DataSet: TDataSet);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ADOTable1BeforePost(DataSet: TDataSet);
@@ -85,7 +86,7 @@ implementation
 {$R *.dfm}
 
 // TODO: Trennstriche zwischen Wochen oder zwischen Urlauben
-// TODO: Anmerkungen
+// IDEE: Wochenend-Multiplikator
 
 uses
   DateUtils, StrUtils, IniFiles;
@@ -114,9 +115,24 @@ begin
   end;
 end;
 
-function MinutenZuHF(f: TField): string;
+function MinutenZuHF_Int(min: integer): string;
 var
   d: integer;
+begin
+  d := min;
+  if d < 0 then
+  begin
+    result := '-';
+    d := -d;
+  end
+  else
+  begin
+    result := '';
+  end;
+  result := result + Format('%.2d:%.2d', [d div 60, d mod 60]);
+end;
+
+function MinutenZuHF(f: TField): string;
 begin
   if IstLeer(f) then
   begin
@@ -124,17 +140,7 @@ begin
   end
   else
   begin
-    d := f.AsInteger;
-    if d < 0 then
-    begin
-      result := '-';
-      d := -d;
-    end
-    else
-    begin
-      result := '';
-    end;
-    result := result + Format('%.2d:%.2d', [d div 60, d mod 60]);
+    result := MinutenZuHF_Int(f.AsInteger);
   end;
 end;
 
@@ -196,8 +202,6 @@ var
   bakEv: TDataSetNotifyEvent;
   dead: boolean;
 begin
-  if ADOTable1.ReadOnly then exit;
-
   if ADOTable1TAG.IsNull then
   begin
     baks := '';
@@ -209,9 +213,11 @@ begin
     else
       DateTimeToString(baks, 'YYYY-MM-DD', ADOTable1TAG.AsDateTime);
   end;
+  ADOTable1.Requery();
+
   bakEv := ADOTable1.AfterPost;
   ADOTable1.AfterPost := nil;
-  ADOTable1.Requery();
+  ADOTable1.DisableControls;
   try
     ADOTable1.First;
     saldo := 0;
@@ -237,6 +243,7 @@ begin
   finally
     if baks <> '' then ADOTable1.Locate('USERNAME;TAG', VarArrayOf([WUserName, baks]), []);
     ADOTable1.AfterPost := bakEv;
+    ADOTable1.EnableControls;
   end;
 end;
 
@@ -358,7 +365,7 @@ begin
   try
     test.Connection := ADOConnection1;
     test.Close;
-    test.SQL.Text := 'select * from TAGE where TAG = ''' + DateToStr(Date) + '''';
+    test.SQL.Text := 'select * from TAGE where TAG = ''' + DateToStr(Date) + ''' and USERNAME = ''' + SQL_Escape(ComboBox1.Text) + '''';
     test.Open;
     if test.RecordCount = 0 then
     begin
@@ -440,7 +447,10 @@ end;
 procedure TForm1.ADOTable1TAGGetText(Sender: TField; var Text: string;
   DisplayText: Boolean);
 begin
-  Text := DateToStr(EchtesDatum(Sender));
+  if IstLeer(Sender) then
+    Text := Sender.AsString
+  else
+    Text := DateToStr(EchtesDatum(Sender));
 end;
 
 procedure TForm1.ADOTable1TAGSetText(Sender: TField; const Text: string);
@@ -505,18 +515,26 @@ end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);
 begin
+  Label2.Caption := MinutenZuHF_Int(RegelArbeitszeit) + ' Std.';
+
+  ADOTable1.DisableControls;
+
   ADOTable1.Active := false;
-  ADOTable1.ReadOnly := ComboBox1.Text <> WUserName;
+  ADOTable1.ReadOnly := false;
   ADOTable1.Filter := 'USERNAME = ''' + SQL_Escape(ComboBox1.Text) + '''';
   ADOTable1.Filtered := true;
   ADOTable1.Active := true;
-  ADOTable1.Last;
-
-  Button1.Enabled := not ADOTable1.ReadOnly;
-
-  Label2.Caption := IntToStr(RegelArbeitszeit);
 
   ReorgAll;
+
+  ADOTable1.Active := false;
+  ADOTable1.ReadOnly := ComboBox1.Text <> WUserName;
+  ADOTable1.Active := true;
+
+  ADOTable1.Last;
+  Button1.Enabled := not ADOTable1.ReadOnly;
+
+  ADOTable1.EnableControls;
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -586,7 +604,8 @@ procedure TForm1.wwDBGrid1CalcCellColors(Sender: TObject; Field: TField;
 begin
   if Highlight then exit;
   
-  if (Field.FieldName = ADOTable1BERSTUNDEN.FieldName) or
+  if (Field.FieldName = ADOTable1WOCHENTAG.FieldName) or
+     (Field.FieldName = ADOTable1BERSTUNDEN.FieldName) or
      (Field.FieldName = ADOTable1BERSTUNDEN_SALDO.FieldName) then
   begin
     ABrush.Color := clBtnFace;
