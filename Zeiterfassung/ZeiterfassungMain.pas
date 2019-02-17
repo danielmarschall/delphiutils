@@ -87,6 +87,7 @@ implementation
 
 // TODO: Trennstriche zwischen Wochen oder zwischen Urlauben
 // IDEE: Wochenend-Multiplikator
+// IDEE: Manche Tage nicht mitrechnen
 
 uses
   DateUtils, StrUtils, IniFiles;
@@ -333,7 +334,10 @@ begin
   end
   else
   begin
-    ADOTable1GEHEN.AsString := Text;
+    if Pos(':', Text) = 0 then
+      ADOTable1GEHEN.AsString := Text + ':00'
+    else
+      ADOTable1GEHEN.AsString := Text;
   end;
 end;
 
@@ -351,7 +355,10 @@ begin
   end
   else
   begin
-    ADOTable1KOMMEN.AsString := Text;
+    if Pos(':', Text) = 0 then
+      ADOTable1KOMMEN.AsString := Text + ':00'
+    else
+      ADOTable1KOMMEN.AsString := Text;
   end;
 end;
 
@@ -395,7 +402,10 @@ begin
   end
   else
   begin
-    ADOTable1PAUSE_ENDE.AsString := Text;
+    if Pos(':', Text) = 0 then
+      ADOTable1PAUSE_ENDE.AsString := Text + ':00'
+    else
+      ADOTable1PAUSE_ENDE.AsString := Text;
   end;
 end;
 
@@ -414,7 +424,10 @@ begin
   end
   else
   begin
-    ADOTable1PAUSE_START.AsString := Text;
+    if Pos(':', Text) = 0 then
+      ADOTable1PAUSE_START.AsString := Text + ':00'
+    else
+      ADOTable1PAUSE_START.AsString := Text;
   end;
 end;
 
@@ -433,7 +446,10 @@ begin
   end
   else
   begin
-    ADOTable1SONSTIGER_ABZUG.AsString := Text;
+    if Pos(':', Text) = 0 then
+      ADOTable1SONSTIGER_ABZUG.AsString := Text + ':00'
+    else
+      ADOTable1SONSTIGER_ABZUG.AsString := Text;
   end;
 end;
 
@@ -504,7 +520,10 @@ begin
   end
   else
   begin
-    ADOTable1ZUHAUSE.AsString := Text;
+    if Pos(':', Text) = 0 then
+      ADOTable1ZUHAUSE.AsString := Text + ':00'
+    else
+      ADOTable1ZUHAUSE.AsString := Text;
   end;
 end;
 
