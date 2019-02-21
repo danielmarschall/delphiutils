@@ -70,6 +70,7 @@ type
       DisplayText: Boolean);
     procedure ADOTable1ZUHAUSEGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
+    procedure ADOTable1BeforeScroll(DataSet: TDataSet);
   private
     function GueltigeZeile: boolean;
   protected
@@ -308,6 +309,11 @@ begin
   ReorgDataSet;
 end;
 
+procedure TForm1.ADOTable1BeforeScroll(DataSet: TDataSet);
+begin
+  if (DataSet.State = dsInsert) and (not ADOTable1TAG.IsNull) then Dataset.Post;
+end;
+
 procedure TForm1.ADOTable1BERSTUNDENGetText(Sender: TField; var Text: string;
   DisplayText: Boolean);
 begin
@@ -376,6 +382,7 @@ begin
     test.Open;
     if test.RecordCount = 0 then
     begin
+
       ADOTable1TAG.AsDateTime := Date;
       ADOTable1KOMMEN.AsString := TimeToStr(Time);
       ADOTable1FREIER_TAG.AsBoolean := (DayOfWeek(Date) = 1{Sunday}) or

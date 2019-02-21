@@ -122,6 +122,7 @@ object Form1: TForm1
     BeforePost = ADOTable1BeforePost
     AfterPost = ADOTable1AfterPost
     AfterDelete = ADOTable1AfterDelete
+    BeforeScroll = ADOTable1BeforeScroll
     OnNewRecord = ADOTable1NewRecord
     TableName = 'TAGE'
     Left = 312
