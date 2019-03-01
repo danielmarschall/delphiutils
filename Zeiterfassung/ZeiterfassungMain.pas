@@ -88,7 +88,7 @@ implementation
 
 // TODO: Trennstriche zwischen Wochen oder zwischen Urlauben
 // IDEE: Wochenend-Multiplikator
-// IDEE: Manche Tage nicht mitrechnen
+// TODO: "Gehen um" Anzeige
 
 uses
   DateUtils, StrUtils, IniFiles;
