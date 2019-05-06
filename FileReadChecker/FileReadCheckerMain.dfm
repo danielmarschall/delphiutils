@@ -13,6 +13,7 @@ object Form1: TForm1
   OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
+  OnCreate = FormCreate
   DesignSize = (
     756
     472)
@@ -46,7 +47,6 @@ object Form1: TForm1
     Default = True
     TabOrder = 0
     OnClick = Button1Click
-    ExplicitTop = 422
   end
   object Edit1: TEdit
     Left = 16
@@ -56,10 +56,9 @@ object Form1: TForm1
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
     Text = 'C:\'
-    ExplicitWidth = 682
   end
   object Memo1: TMemo
-    Left = 16
+    Left = 8
     Top = 64
     Width = 722
     Height = 353
@@ -67,8 +66,6 @@ object Form1: TForm1
     ReadOnly = True
     ScrollBars = ssBoth
     TabOrder = 2
-    ExplicitWidth = 682
-    ExplicitHeight = 352
   end
   object ProgressBar1: TProgressBar
     Left = 201
@@ -77,7 +74,5 @@ object Form1: TForm1
     Height = 17
     Anchors = [akLeft, akRight, akBottom]
     TabOrder = 3
-    ExplicitTop = 422
-    ExplicitWidth = 497
   end
 end

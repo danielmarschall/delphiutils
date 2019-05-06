@@ -16,6 +16,7 @@ type
     ProgressBar1: TProgressBar;
     procedure Button1Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormCreate(Sender: TObject);
   private
     procedure FindFiles(FilesList: TStrings; StartDir, FileMask: string; errorSL: TStrings=nil);
     procedure EnableDisableControls(enabled: boolean);
@@ -45,6 +46,10 @@ begin
   begin
     Application.ProcessMessages;
     if Application.Terminated then Abort;
+
+    if FilesList.Count = FilesList.Capacity - 1 then
+      FilesList.Capacity := FilesList.Capacity + 1000;
+
     FilesList.Add(StartDir + SR.Name);
     IsFound := FindNext(SR) = 0;
   end;
@@ -117,6 +122,7 @@ begin
     cnt := 0;
     sl := TStringList.Create;
     try
+      sl.Sorted := false;
       sl.BeginUpdate;
       Label2.Caption := 'Scan folders ...';
       
@@ -137,7 +143,9 @@ begin
           inc(cnt);
         end;
 
-        Label2.Caption := MinimizeName(fil, Label2.Canvas, Label2.Width);
+        QueryPerformanceCounter(c2);
+        elapsedSecs := Ceil((c2-c1)/f);
+        Label2.Caption := MinimizeName(Format('[%.2d:%.2d:%.2d] %s', [elapsedSecs div 3600, elapsedSecs mod 3600 div 60, elapsedSecs mod 3600 mod 60, fil]), Label2.Canvas, Label2.Width);
 
         Application.ProcessMessages;
         if Application.Terminated then Abort;
@@ -152,7 +160,7 @@ begin
       QueryPerformanceCounter(c2);
       elapsedSecs := Ceil((c2-c1)/f);
 
-      ShowMessageFmt('Finished. Found %d error(s). Time: %.2d:%.2d:%.2d', [cnt, elapsedSecs div 3600, elapsedSecs mod 3600 div 60, elapsedSecs mod 3600 mod 60]);
+      ShowMessageFmt('Finished. Found %d error(s). Elapsed time: %.2d:%.2d:%.2d', [cnt, elapsedSecs div 3600, elapsedSecs mod 3600 div 60, elapsedSecs mod 3600 mod 60]);
     end;
   finally
     EnableDisableControls(true);
@@ -164,12 +172,23 @@ begin
   Application.Terminate;
 end;
 
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  DoubleBuffered := true;
+
+  {$IFDEF UNICODE}
+  Caption := Caption + ' [Unicode]';
+  {$ELSE}
+  Caption := Caption + ' [ANSI]';
+  {$ENDIF}
+end;
+
 procedure TForm1.EnableDisableControls(enabled: boolean);
 begin
   Button1.Enabled := enabled;
   Label1.Enabled := enabled;
   Edit1.Enabled := enabled;
-  Memo1.Enabled := enabled;
+  // Memo1.Enabled := enabled; // is already readonly by default
 end;
 
 end.
