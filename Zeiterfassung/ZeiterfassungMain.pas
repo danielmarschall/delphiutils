@@ -200,7 +200,7 @@ end;
 procedure TForm1.ReorgAll;
 var
   saldo: integer;
-  baks: string;
+  baks, baku: string;
   bakEv: TDataSetNotifyEvent;
   dead: boolean;
 begin
@@ -215,6 +215,7 @@ begin
     else
       DateTimeToString(baks, 'YYYY-MM-DD', ADOTable1TAG.AsDateTime);
   end;
+  baku := ADOTable1USERNAME.AsString;
   ADOTable1.Requery();
 
   bakEv := ADOTable1.AfterPost;
@@ -243,7 +244,7 @@ begin
       ADOTable1.Next;
     end;
   finally
-    if baks <> '' then ADOTable1.Locate('USERNAME;TAG', VarArrayOf([WUserName, baks]), []);
+    if baks <> '' then ADOTable1.Locate('USERNAME;TAG', VarArrayOf([baku, baks]), []);
     ADOTable1.AfterPost := bakEv;
     ADOTable1.EnableControls;
   end;
@@ -373,7 +374,7 @@ var
   test: TADOQuery;
 begin
   ADOTable1FREIER_TAG.AsBoolean := false;
-  ADOTable1USERNAME.AsString := WUserName;
+  ADOTable1USERNAME.AsString := ComboBox1.Text;
   test := TADOQuery.Create(nil);
   try
     test.Connection := ADOConnection1;
@@ -554,7 +555,7 @@ begin
   ReorgAll;
 
   ADOTable1.Active := false;
-  ADOTable1.ReadOnly := ComboBox1.Text <> WUserName;
+  ADOTable1.ReadOnly := (ComboBox1.Text <> WUserName) and (WUserName <> 'Administrator');
   ADOTable1.Active := true;
 
   ADOTable1.Last;
@@ -583,8 +584,8 @@ var
   test: TADOQuery;
   ini: TMemIniFile;
 resourcestring
-  DefaultConnectionString = 'Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Zeiterfassung;' +
-                            'Data Source=SHS\FiVe,49007;Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Workstation ID=MARSCHALL;Use Encryption for Data=False;Tag with column collation when possible=False;';
+  DefaultConnectionString = 'Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=ZEITERFASSUNG;' +
+                            'Data Source=SHS\CORA2017,49011;Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Workstation ID=MARSCHALL;Use Encryption for Data=False;Tag with column collation when possible=False;';
 begin
   ini := TMemIniFile.Create(IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + ChangeFileExt(ExtractFileName(ParamStr(0)), '.ini'));
   try
@@ -613,9 +614,7 @@ begin
 
   if ComboBox1.Items.IndexOf(WUserName) = -1 then
     ComboBox1.Items.Add(WUserName);
-
   ComboBox1.Sorted := true;
-
   ComboBox1.ItemIndex := ComboBox1.Items.IndexOf(WUserName);
 
   ComboBox1Change(ComboBox1);
