@@ -2,7 +2,7 @@ unit AsciiTable;
 
 (*
  * ASCII Table and CSV Generator Delphi Unit
- * Revision 2022-07-09
+ * Revision 2022-07-10
  *
  * (C) 2022 Daniel Marschall, HickelSOFT, ViaThinkSoft
  * Licensed under the terms of Apache 2.0
@@ -51,6 +51,9 @@ begin
   objLine.SetVal(1, '999', taRightJustify);
   VirtTable.Add(objLine);
 
+  VirtTable.AddSeparator;
+  VirtTable.AddSumLine;
+
   // Create ASCII table
   Memo1.Clear;
   VirtTable.GetASCIITable(Memo1.Lines);
@@ -80,6 +83,9 @@ const
 
 type
   TVtsAsciiTableLine = class(TObject)
+  private
+    IsSumLine: boolean;
+    //IsSeparator: boolean;
   public
     Cont: array[0..VTS_ASCII_TABLE_COLS-1] of string;
     Align: array[0..VTS_ASCII_TABLE_COLS-1] of TAlignment;
@@ -91,7 +97,7 @@ type
   TVtsAsciiTableAnalysis = record
     MaxLen: array[0..VTS_ASCII_TABLE_COLS-1] of integer;
     Used: array[0..VTS_ASCII_TABLE_COLS-1] of boolean;
-    Width: integer;
+    Sum: array[0..VTS_ASCII_TABLE_COLS-1] of integer;
   end;
 
   TVtsAsciiTable = class(TObjectList{<TVtsAsciiTableLine>})
@@ -106,6 +112,7 @@ type
     procedure SaveCSV(filename: string);
 
     procedure AddSeparator;
+    procedure AddSumLine;
 
     // Just a little bit type-safe... The rest stays TObject for now
     function Add(AObject: TVtsAsciiTableLine): Integer; reintroduce;
@@ -127,17 +134,36 @@ begin
   Inherited Add(nil);
 end;
 
+procedure TVtsAsciiTable.AddSumLine;
+var
+  objLine: TVtsAsciiTableLine;
+  j: Integer;
+  analysis: TVtsAsciiTableAnalysis;
+begin
+  objLine := TVtsAsciiTableLine.Create;
+  objLine.IsSumLine := true;
+  analysis := GetAnalysis;
+  for j := 0 to VTS_ASCII_TABLE_COLS-1 do
+  begin
+    if analysis.Sum[j] <> 0 then
+      objLine.SetVal(j, IntToStr(analysis.Sum[j]), taRightJustify, ' ');
+  end;
+  Inherited Add(objLine);
+end;
+
 function TVtsAsciiTable.GetAnalysis: TVtsAsciiTableAnalysis;
 var
   j: Integer;
   i: Integer;
   objLine: TVtsAsciiTableLine;
   len: Integer;
+  itmp: integer;
 begin
   for j := 0 to VTS_ASCII_TABLE_COLS-1 do
   begin
     result.MaxLen[j] := 0;
     result.Used[j] := false;
+    result.Sum[j] := 0;
   end;
   for i := 0 to Self.Count-1 do
   begin
@@ -147,6 +173,8 @@ begin
       for j := 0 to VTS_ASCII_TABLE_COLS-1 do
       begin
         len := Length(objLine.Cont[j]);
+        if TryStrToInt(objLine.Cont[j], itmp) then
+          result.Sum[j] := result.Sum[j] + itmp;
         if len > result.MaxLen[j] then
           result.MaxLen[j] := len;
         if len > 0 then
@@ -259,6 +287,7 @@ begin
   begin
     objLine := Self.items[i] as TVtsAsciiTableLine;
     if objLine = nil then continue;
+    if objLine.IsSumLine then continue;
     sLine := '';
     firstcol := true;
     for j := 0 to VTS_ASCII_TABLE_COLS-1 do
