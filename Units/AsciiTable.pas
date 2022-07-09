@@ -51,14 +51,19 @@ begin
   objLine.SetVal(1, '999', taRightJustify);
   VirtTable.Add(objLine);
 
-  // Create ASCII Table
+  // Create ASCII table
   Memo1.Clear;
   VirtTable.GetASCIITable(Memo1.Lines);
+
+  // Save ASCII table
+  VirtTable.SaveASCIITable('Order.txt');
 
   // Create CSV
   Memo2.Clear;
   VirtTable.GetCSV(Memo2.Lines);
-  Memo2.Lines.SaveToFile('Order.csv');
+
+  // Save CSV
+  VirtTable.SaveCSV('Order.csv');
 
   VirtTable.Free;
 end;
@@ -96,7 +101,9 @@ type
   public
     function GetAnalysis: TVtsAsciiTableAnalysis;
     procedure GetASCIITable(sl: TStrings; spaceBetween: integer=3);
+    procedure SaveASCIITable(filename: string; spaceBetween: integer=3);
     procedure GetCSV(sl: TStrings);
+    procedure SaveCSV(filename: string);
 
     procedure AddSeparator;
 
@@ -275,6 +282,33 @@ end;
 procedure TVtsAsciiTable.Insert(Index: Integer; AObject: TVtsAsciiTableLine);
 begin
   Inherited Insert(Index, AObject);
+end;
+
+procedure TVtsAsciiTable.SaveASCIITable(filename: string;
+  spaceBetween: integer);
+var
+  sl: TStringList;
+begin
+  sl := TStringList.Create;
+  try
+    GetASCIITable(sl, spaceBetween);
+    sl.SaveToFile(filename);
+  finally
+    FreeAndNil(sl);
+  end;
+end;
+
+procedure TVtsAsciiTable.SaveCSV(filename: string);
+var
+  sl: TStringList;
+begin
+  sl := TStringList.Create;
+  try
+    GetCSV(sl);
+    sl.SaveToFile(filename);
+  finally
+    FreeAndNil(sl);
+  end;
 end;
 
 procedure TVtsAsciiTable.SetItem(Index: Integer; const Value: TVtsAsciiTableLine);
