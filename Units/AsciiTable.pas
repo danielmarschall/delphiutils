@@ -2,7 +2,7 @@ unit AsciiTable;
 
 (*
  * ASCII Table and CSV Generator Delphi Unit
- * Revision 2022-07-10
+ * Revision 2022-07-11
  *
  * (C) 2022 Daniel Marschall, HickelSOFT, ViaThinkSoft
  * Licensed under the terms of Apache 2.0
@@ -90,8 +90,10 @@ type
     Cont: array[0..VTS_ASCII_TABLE_COLS-1] of string;
     Align: array[0..VTS_ASCII_TABLE_COLS-1] of TAlignment;
     PadChar: array[0..VTS_ASCII_TABLE_COLS-1] of char;
+    DoSum: array[0..VTS_ASCII_TABLE_COLS-1] of boolean;
     procedure Clear;
-    procedure SetVal(index: integer; ACont: string; AAlign: TAlignment=taLeftJustify; APadChar: char=' ');
+    procedure SetVal(index: integer; ACont: string; AAlign: TAlignment=taLeftJustify;
+      APadChar: char=' '; ADoSum: boolean=false);
   end;
 
   TVtsAsciiTableAnalysis = record
@@ -139,16 +141,24 @@ var
   objLine: TVtsAsciiTableLine;
   j: Integer;
   analysis: TVtsAsciiTableAnalysis;
+  found: boolean;
 begin
   objLine := TVtsAsciiTableLine.Create;
   objLine.IsSumLine := true;
   analysis := GetAnalysis;
+  found := false;
   for j := 0 to VTS_ASCII_TABLE_COLS-1 do
   begin
     if analysis.Sum[j] <> 0 then
+    begin
       objLine.SetVal(j, IntToStr(analysis.Sum[j]), taRightJustify, ' ');
+      found := true;
+    end;
   end;
-  Inherited Add(objLine);
+  if found then
+    Inherited Add(objLine)
+  else
+    objLine.Free;
 end;
 
 function TVtsAsciiTable.GetAnalysis: TVtsAsciiTableAnalysis;
@@ -173,7 +183,7 @@ begin
       for j := 0 to VTS_ASCII_TABLE_COLS-1 do
       begin
         len := Length(objLine.Cont[j]);
-        if TryStrToInt(objLine.Cont[j], itmp) then
+        if TryStrToInt(objLine.Cont[j], itmp) and objLine.DoSum[j] then
           result.Sum[j] := result.Sum[j] + itmp;
         if len > result.MaxLen[j] then
           result.MaxLen[j] := len;
@@ -360,11 +370,12 @@ begin
 end;
 
 procedure TVtsAsciiTableLine.SetVal(index: integer; ACont: string;
-  AAlign: TAlignment=taLeftJustify; APadChar: char=' ');
+  AAlign: TAlignment=taLeftJustify; APadChar: char=' '; ADoSum: boolean=false);
 begin
   Self.Cont[index] := ACont;
   Self.Align[index] := AAlign;
   Self.PadChar[index] := APadChar;
+  Self.DoSum[index] := ADoSum;
 end;
 
 end.
