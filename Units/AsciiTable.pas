@@ -2,7 +2,7 @@ unit AsciiTable;
 
 (*
  * ASCII Table and CSV Generator Delphi Unit
- * Revision 2022-07-11
+ * Revision 2022-07-15
  *
  * (C) 2022 Daniel Marschall, HickelSOFT, ViaThinkSoft
  * Licensed under the terms of Apache 2.0
@@ -108,7 +108,8 @@ type
     procedure SetItem(Index: Integer; const Value: TVtsAsciiTableLine);
   public
     function GetAnalysis: TVtsAsciiTableAnalysis;
-    procedure GetASCIITable(sl: TStrings; spaceBetween: integer=3);
+    procedure GetASCIITable(sl: TStrings; spaceBetween: integer=3); overload;
+    function GetASCIITable(spaceBetween: integer=3): string; overload;
     procedure SaveASCIITable(filename: string; spaceBetween: integer=3);
     procedure GetCSV(sl: TStrings);
     procedure SaveCSV(filename: string);
@@ -191,6 +192,19 @@ begin
           result.Used[j] := true;
       end;
     end;
+  end;
+end;
+
+function TVtsAsciiTable.GetASCIITable(spaceBetween: integer): string;
+var
+  sl: TStringList;
+begin
+  sl := TStringList.Create;
+  try
+    GetASCIITable(sl, spaceBetween);
+    result := sl.Text;
+  finally
+    FreeAndNil(sl);
   end;
 end;
 
