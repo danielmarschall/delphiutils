@@ -1,8 +1,11 @@
 unit AsciiTable;
 
+// Download:
+// https://github.com/danielmarschall/delphiutils/blob/master/Units/AsciiTable.pas
+
 (*
  * ASCII Table and CSV Generator Delphi Unit
- * Revision 2022-07-15
+ * Revision 2023-12-08
  *
  * (C) 2022 Daniel Marschall, HickelSOFT, ViaThinkSoft
  * Licensed under the terms of Apache 2.0
@@ -21,54 +24,56 @@ var
   objLine: TVtsAsciiTableLine;
 begin
   VirtTable := TVtsAsciiTable.Create(true);
-  VirtTable.Clear;
+  try
+    VirtTable.Clear;
 
-  // Create Test data
-  objLine := TVtsAsciiTableLine.Create;
-  objLine.SetVal(0, 'Fruit', taCenter);
-  objLine.SetVal(1, 'Amount', taCenter);
-  VirtTable.Add(objLine);
+    // Create Test data
+    objLine := TVtsAsciiTableLine.Create;
+    objLine.SetVal(0, 'Fruit', taCenter);
+    objLine.SetVal(1, 'Amount', taCenter);
+    VirtTable.Add(objLine);
 
-  VirtTable.AddSeparator;
+    VirtTable.AddSeparator;
 
-  objLine := TVtsAsciiTableLine.Create;
-  objLine.SetVal(0, 'Apple', taLeftJustify);
-  objLine.SetVal(1, '123', taRightJustify);
-  VirtTable.Add(objLine);
+    objLine := TVtsAsciiTableLine.Create;
+    objLine.SetVal(0, 'Apple', taLeftJustify);
+    objLine.SetVal(1, '123', taRightJustify);
+    VirtTable.Add(objLine);
 
-  objLine := TVtsAsciiTableLine.Create;
-  objLine.SetVal(0, 'Kiwi', taLeftJustify);
-  objLine.SetVal(1, '1', taRightJustify);
-  VirtTable.Add(objLine);
+    objLine := TVtsAsciiTableLine.Create;
+    objLine.SetVal(0, 'Kiwi', taLeftJustify);
+    objLine.SetVal(1, '1', taRightJustify);
+    VirtTable.Add(objLine);
 
-  objLine := TVtsAsciiTableLine.Create;
-  objLine.SetVal(0, 'Asparagus (green)', taLeftJustify);
-  objLine.SetVal(1, '9999', taRightJustify);
-  VirtTable.Add(objLine);
+    objLine := TVtsAsciiTableLine.Create;
+    objLine.SetVal(0, 'Asparagus (green)', taLeftJustify);
+    objLine.SetVal(1, '9999', taRightJustify);
+    VirtTable.Add(objLine);
 
-  objLine := TVtsAsciiTableLine.Create;
-  objLine.SetVal(0, 'Asparagus (white)', taLeftJustify);
-  objLine.SetVal(1, '999', taRightJustify);
-  VirtTable.Add(objLine);
+    objLine := TVtsAsciiTableLine.Create;
+    objLine.SetVal(0, 'Asparagus (white)', taLeftJustify);
+    objLine.SetVal(1, '999', taRightJustify);
+    VirtTable.Add(objLine);
 
-  VirtTable.AddSeparator;
-  VirtTable.AddSumLine;
+    VirtTable.AddSeparator;
+    VirtTable.AddSumLine;
 
-  // Create ASCII table
-  Memo1.Clear;
-  VirtTable.GetASCIITable(Memo1.Lines);
+    // Create ASCII table
+    Memo1.Clear;
+    VirtTable.GetASCIITable(Memo1.Lines);
 
-  // Save ASCII table
-  VirtTable.SaveASCIITable('Order.txt');
+    // Save ASCII table
+    VirtTable.SaveASCIITable('Order.txt');
 
-  // Create CSV
-  Memo2.Clear;
-  VirtTable.GetCSV(Memo2.Lines);
+    // Create CSV
+    Memo2.Clear;
+    VirtTable.GetCSV(Memo2.Lines);
 
-  // Save CSV
-  VirtTable.SaveCSV('Order.csv');
-
-  VirtTable.Free;
+    // Save CSV
+    VirtTable.SaveCSV('Order.csv');
+  finally
+    FreeAndNil(VirtTable);
+  end;
 end;
 
 }
@@ -99,7 +104,7 @@ type
   TVtsAsciiTableAnalysis = record
     MaxLen: array[0..VTS_ASCII_TABLE_COLS-1] of integer;
     Used: array[0..VTS_ASCII_TABLE_COLS-1] of boolean;
-    Sum: array[0..VTS_ASCII_TABLE_COLS-1] of integer;
+    Sum: array[0..VTS_ASCII_TABLE_COLS-1] of extended;
   end;
 
   TVtsAsciiTable = class(TObjectList{<TVtsAsciiTableLine>})
@@ -124,6 +129,9 @@ type
   end;
 
 implementation
+
+uses
+  Math;
 
 { TVtsAsciiTable }
 
@@ -152,14 +160,14 @@ begin
   begin
     if analysis.Sum[j] <> 0 then
     begin
-      objLine.SetVal(j, IntToStr(analysis.Sum[j]), taRightJustify, ' ');
+      objLine.SetVal(j, FloatToStr(RoundTo(analysis.Sum[j],2)), taRightJustify, ' ');
       found := true;
     end;
   end;
   if found then
     Inherited Add(objLine)
   else
-    objLine.Free;
+    FreeAndNil(objLine);
 end;
 
 function TVtsAsciiTable.GetAnalysis: TVtsAsciiTableAnalysis;
@@ -168,7 +176,7 @@ var
   i: Integer;
   objLine: TVtsAsciiTableLine;
   len: Integer;
-  itmp: integer;
+  itmp: extended;
 begin
   for j := 0 to VTS_ASCII_TABLE_COLS-1 do
   begin
@@ -184,7 +192,7 @@ begin
       for j := 0 to VTS_ASCII_TABLE_COLS-1 do
       begin
         len := Length(objLine.Cont[j]);
-        if TryStrToInt(objLine.Cont[j], itmp) and objLine.DoSum[j] then
+        if TryStrToFloat(RoundTo(objLine.Cont[j],2), itmp) and objLine.DoSum[j] then
           result.Sum[j] := result.Sum[j] + itmp;
         if len > result.MaxLen[j] then
           result.MaxLen[j] := len;
