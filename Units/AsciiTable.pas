@@ -5,7 +5,7 @@ unit AsciiTable;
 
 (*
  * ASCII Table and CSV Generator Delphi Unit
- * Revision 2023-12-08
+ * Revision 2023-12-07
  *
  * (C) 2022 Daniel Marschall, HickelSOFT, ViaThinkSoft
  * Licensed under the terms of Apache 2.0
@@ -192,8 +192,8 @@ begin
       for j := 0 to VTS_ASCII_TABLE_COLS-1 do
       begin
         len := Length(objLine.Cont[j]);
-        if TryStrToFloat(RoundTo(objLine.Cont[j],2), itmp) and objLine.DoSum[j] then
-          result.Sum[j] := result.Sum[j] + itmp;
+        if TryStrToFloat(objLine.Cont[j], itmp) and objLine.DoSum[j] then
+          result.Sum[j] := RoundTo(result.Sum[j] + itmp,2);
         if len > result.MaxLen[j] then
           result.MaxLen[j] := len;
         if len > 0 then
