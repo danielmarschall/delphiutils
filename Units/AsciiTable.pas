@@ -1,13 +1,13 @@
-unit AsciiTable;
+unit hl.Utils.AsciiTable;
 
 // Download:
 // https://github.com/danielmarschall/delphiutils/blob/master/Units/AsciiTable.pas
 
 (*
  * ASCII Table and CSV Generator Delphi Unit
- * Revision 2023-12-07
+ * Revision 2024-01-12
  *
- * (C) 2022 Daniel Marschall, HickelSOFT, ViaThinkSoft
+ * (C) 2022-2024 Daniel Marschall, HickelSOFT, ViaThinkSoft
  * Licensed under the terms of Apache 2.0
  *)
 
@@ -160,7 +160,7 @@ begin
   begin
     if analysis.Sum[j] <> 0 then
     begin
-      objLine.SetVal(j, FloatToStr(RoundTo(analysis.Sum[j],2)), taRightJustify, ' ');
+      objLine.SetVal(j, FloatToStr(RoundTo(analysis.Sum[j], -2)), taRightJustify, ' ');
       found := true;
     end;
   end;
@@ -192,8 +192,8 @@ begin
       for j := 0 to VTS_ASCII_TABLE_COLS-1 do
       begin
         len := Length(objLine.Cont[j]);
-        if TryStrToFloat(objLine.Cont[j], itmp) and objLine.DoSum[j] then
-          result.Sum[j] := RoundTo(result.Sum[j] + itmp,2);
+        if objLine.DoSum[j] and TryStrToFloat(objLine.Cont[j], itmp) then
+          result.Sum[j] := RoundTo(result.Sum[j] + itmp, -2);
         if len > result.MaxLen[j] then
           result.MaxLen[j] := len;
         if len > 0 then
