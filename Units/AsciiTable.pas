@@ -5,7 +5,7 @@ unit hl.Utils.AsciiTable;
 
 (*
  * ASCII Table and CSV Generator Delphi Unit
- * Revision 2024-01-12
+ * Revision 2024-02-08
  *
  * (C) 2022-2024 Daniel Marschall, HickelSOFT, ViaThinkSoft
  * Licensed under the terms of Apache 2.0
@@ -286,7 +286,7 @@ begin
 
       sLine := sLine + StringOfChar('-', Width);
     end;
-    sl.Add(sLine);
+    sl.Add(TrimRight(sLine));
   end;
 end;
 
@@ -331,7 +331,7 @@ begin
         sLine := sLine + ';';
       sLine := sLine + CsvQuoteStr(objLine.Cont[j]);
     end;
-    sl.Add(sLine);
+    sl.Add(TrimRight(sLine));
   end;
 end;
 
