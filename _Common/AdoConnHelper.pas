@@ -66,12 +66,13 @@ type
     function ColumnExists(const aTableName: string; const aColumnName: string): boolean; // TODO: add argument aSchemaName
 
     procedure ShrinkDatabase(const Datenbankname: string; typ: TDatabaseFileType);
+    function SupportsBackupCompression: boolean;
   end;
 
 implementation
 
 uses
-  Windows, Registry;
+  Windows, StrUtils, Registry;
 
 { TAdoConnectionHelperForSqlServer }
 
@@ -208,6 +209,9 @@ function TAdoConnectionHelperForSqlServer.GetDatabaseName: string;
 begin
   // Note: This also works if you have selected a different database using "use"
   result := DefaultDatabase;
+
+  // Alternatively:
+  // result := GetScalar('select db_name()');
 end;
 
 function TAdoConnectionHelperForSqlServer.GetDbOwnerSid: string;
@@ -215,7 +219,7 @@ begin
   // Attention: "sa" user has SID 0x01
   result := GetScalar('select CONVERT([varchar](100), owner_sid, 1) ' +
                       'from sys.databases ' +
-                      'where name = N'+SqlStringEscape(DatabaseName)).AsString;
+                      'where name = N'+SqlStringEscape(DatabaseName)).AsWideString;
 end;
 
 procedure TAdoConnectionHelperForSqlServer.Disconnect;
@@ -323,6 +327,15 @@ begin
   *)
 
   result := 'N''' + result + '''';
+end;
+
+function TAdoConnectionHelperForSqlServer.SupportsBackupCompression: boolean;
+var
+  SqlEdition: string;
+begin
+  SqlEdition := GetScalar('select SERVERPROPERTY(''Edition'')');
+  // ContainsText is important, because the Edition might also be called "Enterprise Evaluation"
+  result := ContainsText(SqlEdition, 'Standard') or ContainsText(SqlEdition, 'Enterprise') or ContainsText(SqlEdition, 'Developer');
 end;
 
 class function TAdoConnectionHelperForSqlServer.SQLObjectNameEscape(const str: string; const schema: string='dbo'): string;
@@ -455,7 +468,7 @@ begin
           '    select m FROM @t ' +
           'end;');
   try
-    result := Copy(GetScalar('exec SeqId').AsString,25,12);
+    result := Copy(GetScalar('exec SeqId').AsWideString,25,12);
   finally
     ExecSQL('DROP PROCEDURE [dbo].[SeqId];');
   end;
@@ -480,7 +493,7 @@ begin
   try
     while not q.Eof do
     begin
-      ExecSQL('DBCC SHRINKFILE (N'+SQLStringEscape(q.Fields[0].AsString)+' , 0)', 3600);
+      ExecSQL('DBCC SHRINKFILE (N'+SQLStringEscape(q.Fields[0].AsWideString)+' , 0)', 3600);
       q.Next;
     end;
   finally
