@@ -4,7 +4,7 @@ unit AdoConnHelper;
  * Class helper for TAdoConnection (works only with Microsoft SQL Server)
  * by Daniel Marschall, ViaThinkSoft <www.viathinksoft.com>
  *
- * Revision: 23 September 2024
+ * Revision: 25 September 2024
  * License: Apache 2.0
  *
  * Latest version here:
@@ -326,7 +326,7 @@ begin
   result := StringReplace(result, ':', '::', [rfReplaceAll]);
   *)
 
-  result := 'N''' + result + '''';
+  result := '''' + result + '''';
 end;
 
 function TAdoConnectionHelperForSqlServer.SupportsBackupCompression: boolean;
@@ -506,7 +506,7 @@ begin
   if Copy(aTableName, 1, 1) = '#' then
   begin
     // Temporary table
-    result := GetScalar('select case when OBJECT_ID(N'+SQLStringEscape('tempdb..'+aTableName)+') is not null then ''1'' else ''0'' end') > 0;
+    result := GetScalar('select case when OBJECT_ID(N'+SQLStringEscape('tempdb..'+aTableName)+') is not null then ''1'' else ''0'' end') = '1';
   end
   else
   begin
