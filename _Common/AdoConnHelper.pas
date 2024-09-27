@@ -4,7 +4,7 @@ unit AdoConnHelper;
  * Class helper for TAdoConnection (works only with Microsoft SQL Server)
  * by Daniel Marschall, ViaThinkSoft <www.viathinksoft.com>
  *
- * Revision: 25 September 2024
+ * Revision: 27 September 2024
  * License: Apache 2.0
  *
  * Latest version here:
@@ -26,8 +26,9 @@ type
     function GetDatabaseName: string;
     function GetDbOwnerSid: string;
     function GetSqlServerMac: string;
-    function SqlServerBestProvider: string;
   public
+    class function SqlServerBestProvider: string;
+
     function GetTable(const SQL: string; ATimeout: integer=-1): TADODataSet;
     function GetScalar(const SQL: string; ATimeout: integer=-1): Variant;
     function Any(const SQL: string; ATimeout: integer=-1): boolean;
@@ -346,7 +347,7 @@ end;
 threadvar
   _SqlServerProvider_Cache: string;
 
-function TAdoConnectionHelperForSqlServer.SqlServerBestProvider: string;
+class function TAdoConnectionHelperForSqlServer.SqlServerBestProvider: string;
 var
   reg: TRegistry;
 begin
