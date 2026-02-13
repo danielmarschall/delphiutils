@@ -4,7 +4,7 @@ unit AdoConnHelper;
  * Class helper for TAdoConnection (works only with Microsoft SQL Server)
  * by Daniel Marschall, ViaThinkSoft <www.viathinksoft.com>
  *
- * Revision: 27 September 2024
+ * Revision: 13 February 2026
  * License: Apache 2.0
  *
  * Latest version here:
@@ -45,7 +45,7 @@ type
     class function SQLFieldNameEscape(const str: string): string; static;
     class function SQLDatabaseNameEscape(const str: string): string; static;
 
-    procedure GetPrimaryKeyNames(const TableName: string; outsl: TStrings); // TODO: add argument aSchemaName
+    procedure GetPrimaryKeyNames(const aTableName: string; outsl: TStrings; const aSchemaName: string='dbo');
 
     property ConnectionID: TGUID read GetConnectionID;
     property DatabaseName: string read GetDatabaseName;
@@ -58,16 +58,19 @@ type
     procedure DropDatabase(const aDatabaseName: string);
     procedure DropColumn(const aTableName: string; const aColumnName: string; const schema: string='dbo');
 
-    function FieldCount(const aTableName: string): integer; // TODO: add argument aSchemaName
-    function IndexCount(const aTableName: string): integer; // TODO: add argument aSchemaName
-
     function TableExists(const aTableName: string; const aSchemaName: string='dbo'): boolean;
+
     function ViewExists(const aViewName: string; const aSchemaName: string='dbo'): boolean;
-    function IndexExists(const aTableName: string; const aIndexName: string): boolean; // TODO: add argument aSchemaName
-    function ColumnExists(const aTableName: string; const aColumnName: string): boolean; // TODO: add argument aSchemaName
+
+    function FieldCount(const aTableName: string; const aSchemaName: string='dbo'): integer;
+    function ColumnExists(const aTableName: string; const aColumnName: string; const aSchemaName: string='dbo'): boolean;
+
+    function IndexCount(const aTableName: string; const aSchemaName: string='dbo'): integer;
+    function IndexExists(const aTableName: string; const aIndexName: string; const aSchemaName: string='dbo'): boolean;
 
     procedure ShrinkDatabase(const Datenbankname: string; typ: TDatabaseFileType);
     function SupportsBackupCompression: boolean;
+    function NewSeqGuid: TGUID;
   end;
 
 implementation
@@ -87,7 +90,7 @@ begin
   result := StringToGUID(s);
 end;
 
-procedure TAdoConnectionHelperForSqlServer.GetPrimaryKeyNames(const TableName: string; outsl: TStrings);
+procedure TAdoConnectionHelperForSqlServer.GetPrimaryKeyNames(const aTableName: string; outsl: TStrings; const aSchemaName: string='dbo');
 var
   ds: TADODataSet;
 begin
@@ -96,7 +99,8 @@ begin
     OpenSchema(siPrimaryKeys, Unassigned, EmptyParam, ds);
     while not ds.Eof do
     begin
-      if ds.FieldByName('TABLE_NAME').AsWideString = TableName then
+      if (ds.FieldByName('TABLE_NAME').AsWideString = aTableName) and
+         (ds.FieldByName('TABLE_SCHEMA').AsWideString = aSchemaName) then
       begin
         outsl.Add(ds.FieldByName('COLUMN_NAME').AsWideString);
       end;
@@ -104,7 +108,7 @@ begin
     end;
     ds.Close;
   finally
-    ds.Free;
+    FreeAndNil(ds);
   end;
 end;
 
@@ -116,7 +120,7 @@ begin
   try
     result := ds.Fields[0].AsVariant;
   finally
-    ds.Free;
+    FreeAndNil(ds);
   end;
 end;
 
@@ -145,28 +149,56 @@ begin
   try
     result := not q.EOF;
   finally
-    q.Free;
+    FreeAndNil(q);
   end;
 end;
 
-function TAdoConnectionHelperForSqlServer.ColumnExists(const aTableName: string; const aColumnName: string): boolean;
+function TAdoConnectionHelperForSqlServer.FieldCount(const aTableName: string; const aSchemaName: string='dbo'): integer;
 begin
-  result := GetScalar('select count (*) from sys.columns where Name = N'+SQLStringEscape(aColumnName)+' and Object_ID = Object_ID(N'+SQLStringEscape(aTableName)+')') > 0;
+  Result := GetScalar(
+    'SELECT COUNT(*) ' +
+    'FROM sys.columns ' +
+    'WHERE object_id = OBJECT_ID(N' + SQLStringEscape(aSchemaName + '.' + aTableName) + ')'
+  );
 end;
 
-function TAdoConnectionHelperForSqlServer.IndexCount(const aTableName: string): integer;
+function TAdoConnectionHelperForSqlServer.ColumnExists(const aTableName: string;
+  const aColumnName: string; const aSchemaName: string='dbo'): boolean;
 begin
-  result := GetScalar('select max (ik.indid) from sysindexkeys ik left join sysindexes ind on ind.id = ik.id and ind.indid = ik.indid where ik.id = (select id from sysobjects ' +
-                      'where name = N'+SqlStringEscape(aTableName)+') and ind.status < 10000000');
+  Result := GetScalar(
+    'SELECT COUNT(*) ' +
+    'FROM sys.columns ' +
+    'WHERE object_id = OBJECT_ID(N' + SQLStringEscape(aSchemaName + '.' + aTableName) + ') ' +
+    'AND name = N' + SQLStringEscape(aColumnName)
+  ).AsInteger > 0;
+end;
+
+function TAdoConnectionHelperForSqlServer.IndexCount(const aTableName: string;
+  const aSchemaName: string='dbo'): integer;
+begin
+  Result := GetScalar(
+    'SELECT COUNT(*) ' +
+    'FROM sys.indexes i ' +
+    'INNER JOIN sys.tables t ON i.object_id = t.object_id ' +
+    'INNER JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+    'WHERE t.name = N' + SqlStringEscape(aTableName) + ' ' +
+    'AND s.name = N' + SqlStringEscape(aSchemaName) + ' ' +
+    'AND i.index_id > 0'   // ignores Heap (index_id = 0)
+  );
 end;
 
 function TAdoConnectionHelperForSqlServer.IndexExists(const aTableName,
-  aIndexName: string): boolean;
+  aIndexName: string; const aSchemaName: string='dbo'): boolean;
 begin
-  result := GetScalar('select count (*) ' +
-                      'from sys.indexes ' +
-                      'where name = N'+SqlStringEscape(aIndexName)+' and ' +
-                      'Object_ID = Object_ID(N'+SqlStringEscape(aTableName)+')').AsInteger > 0;
+  Result := GetScalar(
+    'SELECT COUNT(*) ' +
+    'FROM sys.indexes i ' +
+    'INNER JOIN sys.tables t ON i.object_id = t.object_id ' +
+    'INNER JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+    'WHERE t.name = N' + SqlStringEscape(aTableName) + ' ' +
+    'AND s.name = N' + SqlStringEscape(aSchemaName) + ' ' +
+    'AND i.name = N' + SqlStringEscape(aIndexName)
+  ).AsInteger > 0;
 end;
 
 function TAdoConnectionHelperForSqlServer.InsertAndReturnID(const query: string): integer;
@@ -191,7 +223,7 @@ begin
 
       result := q1.Fields[0{INSERT_ID}].AsInteger;
     finally
-      q1.Free;
+      FreeAndNil(q1);
     end;
   finally
     CommitTrans;
@@ -244,6 +276,14 @@ begin
     try
       ExecSQL('use master');
     except
+      on E: EAbort do
+      begin
+        Abort;
+      end;
+      on E: Exception do
+      begin
+        // ignore
+      end;
     end;
   end;
   ExecSql('drop database ' + SQLDatabaseNameEscape(aDatabaseName));
@@ -277,7 +317,7 @@ begin
       cmd.CommandTimeout := self.CommandTimeout;
     cmd.Execute;
   finally
-    cmd.Free;
+    FreeAndNil(cmd);
   end;
 end;
 
@@ -290,17 +330,17 @@ begin
     try
       ExecSQL(s, ATimeout);
     except
+      on E: EAbort do
+      begin
+        Abort;
+      end;
+      on E: Exception do
+      begin
       if not AContinueOnError then
         raise;
     end;
   end;
 end;
-
-function TAdoConnectionHelperForSqlServer.FieldCount(const aTableName: string): integer;
-begin
-  result := GetScalar('select count(*) ' +
-                      'from syscolumns ' +
-                      'where id = (select id from sysobjects where name = N'+SQLStringEscape(aTableName)+')');
 end;
 
 class function TAdoConnectionHelperForSqlServer.SQLStringEscape(const str: string): string;
@@ -475,6 +515,15 @@ begin
   end;
 end;
 
+function TAdoConnectionHelperForSqlServer.NewSeqGuid: TGUID;
+var
+  v: variant;
+begin
+  // see https://stackoverflow.com/a/913570/488539
+  v := GetScalar('select cast(cast(NewID() as binary(10)) + cast(GetDate() as binary(6)) as uniqueidentifier)');
+  result := StringToGUID(VarToStrDef(v, '{00000000-0000-0000-0000-000000000000}'));
+end;
+
 procedure TAdoConnectionHelperForSqlServer.ShrinkDatabase(const Datenbankname: string; typ: TDatabaseFileType);
 var
   q: TAdoDataset;
@@ -498,7 +547,7 @@ begin
       q.Next;
     end;
   finally
-    q.Free;
+    FreeAndNil(q);
   end;
 end;
 
@@ -512,7 +561,6 @@ begin
   else
   begin
     // Physical table
-    // result := GetScalar('select count (*) from sysobjects where name = ' + aTableName.toSQLString) > 0;
     result := GetScalar('SELECT count(*) ' +
                         'FROM INFORMATION_SCHEMA.TABLES ' +
                         'WHERE TABLE_CATALOG = N'+SQLStringEscape(DataBaseName)+' AND ' +
